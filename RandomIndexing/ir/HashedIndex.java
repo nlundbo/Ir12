@@ -79,9 +79,49 @@ public class HashedIndex implements Index {
     		pageRank = readPageRank();
     		System.err.println("Done.");
     	}
+
+	
     	
     	if( queryType == Index.RANKED_QUERY){
-    		return rankedSearch(searchTerms);    		
+	    PostingsList pll = rankedSearch(searchTerms);
+	    for( PostingsEntry pl : pll.getList() ){
+		System.out.println("result: " + docIDs.get(""+pl.docID));
+	    }
+
+	    PostingsEntry pl = pll.getList().getFirst();
+	    int docID = pl.docID;
+	    String file = docIDs.get(""+docID);
+	    System.err.println(file);
+	    try{
+		FileReader reader = new FileReader( new File(file));
+		SimpleTokenizer tok = new SimpleTokenizer( reader );
+		int offset = 0;
+		HashMap<String,Double> hm = new HashMap<String,Double>();
+		while ( tok.hasMoreTokens() ) {
+		    String str = tok.nextToken();
+		    hm.put(str, new Double(tfIdf(str,docID))); 
+		    offset++;
+		}
+		LinkedList<Mupp> ll = new LinkedList<Mupp>();
+		for( String key : hm.keySet()){
+		    ll.add(new Mupp(key, hm.get(key)) );
+		}
+
+		Collections.sort(ll);
+		int i = 0;
+		for( Mupp m : ll){
+		    i++;
+		     System.out.println("S: " + m.word + " V: " +m.tfidf);
+		     if(i > 10) break;
+		}
+		reader.close();
+	    }catch( IOException e ) {
+		e.printStackTrace();
+	    }
+	    
+
+
+	    return pll;
     	}else if(searchTerms.size() == 1 ){    		
     		return getPostings(searchTerms.getFirst());    		
     	}else if(queryType == Index.INTERSECTION_QUERY){ // many words
@@ -92,11 +132,43 @@ public class HashedIndex implements Index {
     	return null;
     }
     
+    private class Mupp implements Comparable<Mupp>{
+	public String word;
+	public Double tfidf;
+	public Mupp(){
+	    word = "";
+	    tfidf = new Double(0.0);
+	}
+	public Mupp(String str, Double tfidf){
+	    word = str;
+	    this.tfidf = tfidf;
+	}
+	
+	 public int compareTo(Mupp o) {
+	     return Double.compare( o.tfidf, tfidf);
+	 }	
+    }
+   
+    public double tfIdf(String term , int docID){
+        PostingsList p1 = getPostings(term);  //Documents containing term
+        int NP = docLengths.size();            // Number of documents
+        int df = getPostings(term).size();    //Number of documents where term occur
+        
+        double idf = Math.log10(NP/df);        //Inverse term frequency
+        double tf = p1.getDocIdList(docID) == null ? 0 : p1.getDocIdList(docID).wordPos.size() ; 
+	//Number of occurence of the term in document (based on docID)
+        double wf = (1+Math.log10(tf)); //Weighted tf
+        System.out.println("tf: "+tf);
+        System.out.println("idf: "+idf);
+        return wf*idf;
+       
+    }
     
+
+
     private PostingsList rankedSearch(LinkedList<String> searchTerms){
     	HashMap<String,Integer> terms = new HashMap<String,Integer>();		
 		LinkedList<PostingsList> pl = new LinkedList<PostingsList>();
-		System.out.println("rolf");
 		// Get unique search terms, and count their frequency		
 		for( String s : searchTerms){
 			int tmp = 0;
@@ -133,7 +205,6 @@ public class HashedIndex implements Index {
 			if(currentTerm != null){
     			double df = (double)currentTerm.size() +1;
     			double idf = Math.log10((docSize.size()+1.0)/df);    			
-    			
     			qv[i] = idf * (1 + Math.log10((double)terms.get(s)));    			
     			//qv[i] = idf *(double)terms.get(s);
     			for(int j =0; j< dm.length; ++j){
