@@ -1,3 +1,3 @@
 main(){
-	print(lool)
+	System.println(lool)
 }
