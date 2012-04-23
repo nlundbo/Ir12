@@ -1,5 +1,5 @@
 #! /bin/bash
 javac -d . SimpleTokenizer.java
-java ir.SimpleTokenizer
+java ir.SimpleTokenizer $1
 
 

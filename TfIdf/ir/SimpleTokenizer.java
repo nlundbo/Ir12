@@ -7,9 +7,7 @@
 
 package ir;
 
-import java.io.Reader;
-import java.io.IOException;
-
+import java.io.*;
 
 public class SimpleTokenizer {
 
@@ -54,7 +52,7 @@ public class SimpleTokenizer {
 
 
     public SimpleTokenizer( Reader reader ) {
-	this.reader = reader;
+		this.reader = reader;
     }
 
 
@@ -64,13 +62,13 @@ public class SimpleTokenizer {
      *  whitespace.
      */
     public static String normalize( String s ) {
-	char[] buf = s.toCharArray(); 
-	for ( int i=0; i<buf.length; i++ ) {
-	    if ( !normalize( buf, i )) {
-		buf[i] = ' ';
-	    }
-	}
-	return new String( buf );
+		char[] buf = s.toCharArray(); 
+		for ( int i=0; i<buf.length; i++ ) {
+	    	if ( !normalize( buf, i )) {
+				buf[i] = ' ';
+	    	}
+		}
+		return new String( buf );
     }
 
 
@@ -213,7 +211,23 @@ public class SimpleTokenizer {
     }
 
 	public static void main(String args []){
-		System.out.println("TEst");
+		String file = null;
+		if(args.length > 0){
+			file = args[0];
+		}
+		if(file != null){
+			try{
+		
+				FileReader reader = new FileReader(new File(file));
+				SimpleTokenizer tok = new SimpleTokenizer(reader);
+			
+				while (tok.hasMoreTokens()) {
+					String str = tok.nextToken();
+					System.out.println(str);
+				}
+			}catch (Exception e){
+			}
+	}
 	}
 }
 
