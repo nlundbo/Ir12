@@ -42,7 +42,7 @@ public class SearchGUI extends JFrame {
     public static final int MAX_NUMBER_OF_INDEX_FILES = 10;
 
     /**  The query type (either intersection, phrase, or ranked). */
-    int queryType = Index.INTERSECTION_QUERY;
+    int queryType = Index.RANKED_QUERY;
 
     /**  The index type (either hashed or mega). */
     int indexType = Index.HASHED_INDEX;
@@ -54,17 +54,7 @@ public class SearchGUI extends JFrame {
     public static final String homeDir = "/afs/nada.kth.se/home/4/u1b06qp4/Documents/ir12/lab1";
 
 
-    /*
-     *   The nice logotype
-     */
-    static final String IPIC = homeDir + "/pics/i.jpg";
-    static final String RPIC = homeDir + "/pics/r.jpg";
-    static final String TPIC = homeDir + "/pics/t.jpg";
-    static final String WPIC = homeDir + "/pics/w.jpg";
-    static final String EPIC = homeDir + "/pics/e.jpg";
-    static final String LPIC = homeDir + "/pics/l.jpg";
-    static final String VPIC = homeDir + "/pics/v.jpg";
-    static final String BLANKPIC = homeDir + "/pics/blank.jpg";
+
 
 
     /*  
@@ -80,8 +70,6 @@ public class SearchGUI extends JFrame {
     JMenu optionsMenu = new JMenu( "Search options" );
     JMenuItem saveItem = new JMenuItem( "Save index and exit" );
     JMenuItem quitItem = new JMenuItem( "Quit" );
-    JRadioButtonMenuItem intersectionItem = new JRadioButtonMenuItem( "Intersection query" );
-    JRadioButtonMenuItem phraseItem = new JRadioButtonMenuItem( "Phrase query" );
     JRadioButtonMenuItem rankedItem = new JRadioButtonMenuItem( "Ranked retrieval" );
     ButtonGroup queries = new ButtonGroup();
 
@@ -104,34 +92,22 @@ public class SearchGUI extends JFrame {
 	menuBar.add( optionsMenu );
 	fileMenu.add( saveItem );
 	fileMenu.add( quitItem );
-	optionsMenu.add( intersectionItem );
-	optionsMenu.add( phraseItem );
 	optionsMenu.add( rankedItem );
-	queries.add( intersectionItem );
-	queries.add( phraseItem );
 	queries.add( rankedItem );
-	intersectionItem.setSelected( true );
+	rankedItem.setSelected( true );
 	p.add( menuBar );
 	// Logo
 	JPanel p1 = new JPanel();
 	p1.setLayout(new BoxLayout(p1, BoxLayout.X_AXIS));
-	p1.add( new JLabel( new ImageIcon( IPIC )));
-	p1.add( new JLabel( new ImageIcon( RPIC )));
-	p1.add( new JLabel( new ImageIcon( BLANKPIC )));
-	p1.add( new JLabel( new ImageIcon( TPIC )));
-	p1.add( new JLabel( new ImageIcon( WPIC )));
-	p1.add( new JLabel( new ImageIcon( EPIC )));
-	p1.add( new JLabel( new ImageIcon( LPIC )));
-	p1.add( new JLabel( new ImageIcon( VPIC )));
-	p1.add( new JLabel( new ImageIcon( EPIC )));
+	JLabel jl = new JLabel( "Sebastians MOM is so poor she couldn't even pay attention");
+	jl.setFont(new Font("Comic sans MS",Font.BOLD,18));
+	p1.add(jl );
 	p.add( p1 );
 	JPanel p3 = new JPanel();
 	// Search box
 	p3.setLayout(new BoxLayout(p3, BoxLayout.X_AXIS));
-	p3.add( new JLabel( new ImageIcon( BLANKPIC )));
 	p3.add( queryWindow );
 	queryWindow.setFont( queryFont );
-	p3.add( new JLabel( new ImageIcon( BLANKPIC )));
 	p.add( p3 );
 	// Display area for search results
 	p.add( resultPane );
@@ -151,30 +127,20 @@ public class SearchGUI extends JFrame {
 		    // Search and print results. Access to the index is synchronized since
 		    // we don't want to search at the same time we're indexing new files
 		    // (this might corrupt the index).
-		    PostingsList p;
+		    LinkedList<String> result;
 		    synchronized ( indexLock ) {
-			p = indexer.index.search( searchterms, queryType );
+			result = indexer.index.search( searchterms, queryType );
 		    }
 		    StringBuffer buf = new StringBuffer();
-		    if ( p != null ) {
-			buf.append( "\nFound " + p.size() + " matching document(s)\n\n" );
-			for ( int i=0; i<p.size(); i++ ) {
-			    buf.append( " " + i + ". " );
-			    String filename = indexer.index.docIDs.get( "" + p.get(i).docID );
-			    if ( filename == null ) {
-				buf.append( "" + p.get(i).docID );
-			    }
-			    else {
-				buf.append( filename );
-			    }
-			    if ( queryType == Index.RANKED_QUERY ) {
-				buf.append( "   " + String.format( "%.3f", p.get(i).score ));
-			    }
+		    if ( result != null ) {
+			buf.append( "\nFound " + result.size() + " matching document(s)\n\n" );
+			for ( int i=0; i<result.size(); i++ ) {
+			    buf.append(result.get(i));
 			    buf.append( "\n" );
 			}
 		    }
 		    else {
-			buf.append( "\nFound 0 matching document(s)\n\n" );
+			buf.append( "\nFound 0 extraction\n\n" );
 		    }
 		    resultWindow.setText( buf.toString() );
 		    resultWindow.setCaretPosition( 0 );
@@ -204,19 +170,8 @@ public class SearchGUI extends JFrame {
 	quitItem.addActionListener( quit );
 
 	
-	Action setIntersectionQuery = new AbstractAction() {
-		public void actionPerformed( ActionEvent e ) {
-		    queryType = Index.INTERSECTION_QUERY;
-		}
-	    };
-	intersectionItem.addActionListener( setIntersectionQuery );
-		
-	Action setPhraseQuery = new AbstractAction() {
-		public void actionPerformed( ActionEvent e ) {
-		    queryType = Index.PHRASE_QUERY;
-		}
-	    };
-	phraseItem.addActionListener( setPhraseQuery );
+	
+	
 		
 	Action setRankedQuery = new AbstractAction() {
 		public void actionPerformed( ActionEvent e ) {
