@@ -66,8 +66,8 @@ public class HashedIndex implements Index {
 	/**
 	 * Searches the index for postings matching the query in @code{searchterms}.
 	 */
-	public PostingsList search(LinkedList<String> searchTerms, int queryType) {
-
+	public LinkedList<String> search(LinkedList<String> searchTerms, int queryType) {
+		LinkedList<String> returnList= new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
 			PostingsList pll = rankedSearch(searchTerms);
 			for (PostingsEntry pl : pll.getList()) {
@@ -94,16 +94,14 @@ public class HashedIndex implements Index {
 				int i = 0;
 				for (Word m : ll) {
 					i++;
-					System.out.println("S: " + m.word + " V: " + m.tfidf);
+					returnList.add("S: " + m.word + " V: " + m.tfidf);
 					if (i > 10)
 						break;
 				}
 				
 			
 
-			return pll;
-		} else if (searchTerms.size() == 1) {
-			return getPostings(searchTerms.getFirst());
+			return returnList;
 		} 
 		
 		return null;
@@ -116,7 +114,7 @@ public class HashedIndex implements Index {
 	 * @return Hashmap containing word/tfidf pairs - null if errornous
 	 */
 	private HashMap<String, Double> extractTfIdfFromDoc(int docID, String file){
-		HashMap<String, Double> hm;
+		HashMap<String, Double> hm = null;
 		
 		try{
 		FileReader reader = new FileReader(new File(file));
