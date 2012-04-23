@@ -7,7 +7,7 @@
  */  
 
 
-package IR;
+package ir;
 
 import java.io.File;
 import java.io.Reader;

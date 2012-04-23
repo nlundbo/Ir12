@@ -5,7 +5,7 @@
  *  First version: Johan Boye, 2010
  */  
 
-package IR;
+package ir;
 
 import java.io.Reader;
 import java.io.IOException;
