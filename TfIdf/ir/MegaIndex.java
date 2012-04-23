@@ -6,7 +6,7 @@
  *   Second version: Johan Boye, 2012
  */  
 
-package ir;
+package IR;
 
 import com.larvalabs.megamap.MegaMapManager;
 import com.larvalabs.megamap.MegaMap;

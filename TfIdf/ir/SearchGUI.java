@@ -1,4 +1,8 @@
+//Sebastian?
+
 /*  
+
+
  *   This file is part of the computer assignment for the
  *   Information Retrieval course at KTH.
  * 
@@ -6,7 +10,7 @@
  */  
 
 
-package ir;
+package IR;
 
 import java.io.File;
 import java.io.IOException;

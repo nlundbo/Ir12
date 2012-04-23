@@ -6,7 +6,7 @@
  *   Second version: Johan Boye, 2012
  */  
 
-package ir;
+package IR;
 
 import java.util.LinkedList;
 import java.io.Serializable;
