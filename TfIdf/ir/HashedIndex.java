@@ -10,9 +10,6 @@ package ir;
 
 import java.util.ArrayList;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.HashMap;
 import java.util.*;
 import java.io.*;
 
@@ -65,6 +62,7 @@ public class HashedIndex implements Index {
 		return index.get(token);
 	}
 
+	
 	/**
 	 * Searches the index for postings matching the query in @code{searchterms}.
 	 */
@@ -75,21 +73,18 @@ public class HashedIndex implements Index {
 			for (PostingsEntry pl : pll.getList()) {
 				System.out.println("result: " + docIDs.get("" + pl.docID));
 		}
-
+			
+			
+			// TODO Get List docIDs from resulting postings list 
+			
 			PostingsEntry pl = pll.getList().getFirst();
 			int docID = pl.docID;
 			String file = docIDs.get("" + docID);
+			
+			//Get corresponding file given the docID TODO do it for every docID
 			System.err.println(file);
-			try {
-				FileReader reader = new FileReader(new File(file));
-				SimpleTokenizer tok = new SimpleTokenizer(reader);
-				int offset = 0;
-				HashMap<String, Double> hm = new HashMap<String, Double>();
-				while (tok.hasMoreTokens()) {
-					String str = tok.nextToken();
-					hm.put(str, new Double(tfIdf(str, docID)));
-					offset++;
-				}
+			
+				HashMap<String, Double> hm = extractTfIdfFromDoc(docID, file);
 				LinkedList<Word> ll = new LinkedList<Word>();
 				for (String key : hm.keySet()) {
 					ll.add(new Word(key, hm.get(key)));
@@ -103,10 +98,8 @@ public class HashedIndex implements Index {
 					if (i > 10)
 						break;
 				}
-				reader.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+				
+			
 
 			return pll;
 		} else if (searchTerms.size() == 1) {
@@ -115,7 +108,41 @@ public class HashedIndex implements Index {
 		
 		return null;
 	}
-	
+
+	/**
+	 * Get hashmap 
+	 * @param docID
+	 * @param file
+	 * @return Hashmap containing word/tfidf pairs - null if errornous
+	 */
+	private HashMap<String, Double> extractTfIdfFromDoc(int docID, String file){
+		HashMap<String, Double> hm;
+		
+		try{
+		FileReader reader = new FileReader(new File(file));
+		SimpleTokenizer tok = new SimpleTokenizer(reader);
+		int offset = 0;
+		
+		//Hashmap containing word/score pairs
+		hm = new HashMap<String, Double>();
+		
+		
+		while (tok.hasMoreTokens()) {
+			String str = tok.nextToken();
+			hm.put(str, new Double(tfIdf(str, docID)));
+			offset++;
+		}
+		reader.close();
+		}catch (Exception e) {
+			// TODO: handle exception
+		}
+			
+		
+			
+		
+		return hm;
+	}
+
 	private class Word implements Comparable<Word> {
 		public String word;
 		public Double tfidf;
@@ -311,14 +338,6 @@ public class HashedIndex implements Index {
 	}
 
 	
-	private boolean phraseSearch(int offset,
-			ArrayList<LinkedList<Integer>> wordPos, int idx) {
-		if (idx == wordPos.size())
-			return true;
-		return wordPos.get(idx).contains(offset)
-				&& phraseSearch(offset + 1, wordPos, idx + 1);
-	}
-
 	
 
 	private PostingsList intersection(PostingsList p1, PostingsList p2) {
