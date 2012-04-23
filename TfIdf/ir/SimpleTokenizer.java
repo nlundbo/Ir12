@@ -211,6 +211,10 @@ public class SimpleTokenizer {
 	    buf[chars_read] = 0;
 	}
     }
+
+	public static void main(String args []){
+		System.out.println("TEst");
+	}
 }
 
 
