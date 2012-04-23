@@ -206,16 +206,8 @@ public class MegaIndex implements Index {
     /**
      *  Searches the index for postings matching the query in @code{searchterms}.
      */
-    public PostingsList search( LinkedList<String> searchTerms, int queryType ) {
+    public LinkedList<String> search( LinkedList<String> searchTerms, int queryType ) {
     
-    	if(searchTerms.size() == 1 ){
-    		return getPostings(searchTerms.getFirst());
-    	}else if(queryType == Index.INTERSECTION_QUERY){ // many words
-    		return startIntersection(searchTerms);    		
-    	}else if(queryType == Index.PHRASE_QUERY){ // phrase search
-    		return startPhraseSearch(searchTerms);
-    	}
-    		
     	
     	return null;	
     }
