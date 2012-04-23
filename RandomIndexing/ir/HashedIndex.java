@@ -4,8 +4,7 @@
  * 
  *   First version:  Johan Boye, 2010
  *   Second version: Johan Boye, 2012
- */  
-
+ */
 
 package ir;
 
@@ -17,210 +16,197 @@ import java.util.HashMap;
 import java.util.*;
 import java.io.*;
 
-
 /**
- *   Implements an inverted index as a Hashtable from words to PostingsLists.
+ * Implements an inverted index as a Hashtable from words to PostingsLists.
  */
 public class HashedIndex implements Index {
 
-    /** The index as a hashtable.*/
-    private HashMap<String,PostingsList> index = new HashMap<String,PostingsList>();
-    private HashMap<Integer,Integer> docSize = new HashMap<Integer,Integer>();
-    private HashMap<Integer,Double> pageRank;
-    int N = 0;
-    private static boolean PAGE = false;
-    private static boolean DEBUG = false;
-    
-    //private static String PAGERANKFILE = "ir/tmp";
-    //private static String PAGERANKFILE = "/var/tmp/MC3";
-    private static String PAGERANKFILE = "/var/tmp/MC4";
-    
-    /**
-     *  Inserts this token in the index.
-     */
-    public void insert( String token, int docID, int offset ) {
-    	int i =0;
-    	if(docSize.containsKey(docID)){
-    		i = docSize.get(docID);
-    	}
-    	docSize.put(docID, i+1);
-    	
-    	N++;
-    	int score = 0; //todo
-    	PostingsList pl;
-    	if(index.containsKey(token)){
-    		pl = getPostings(token);    		
-    	}else{    		
-			pl = new PostingsList();
-			index.put(token,pl);    		
-    	}
-		
-		pl.addPostingsEntry(docID,score,offset);    	
-    	
-	}
+	/** The index as a hashtable. */
+	private HashMap<String, PostingsList> index = new HashMap<String, PostingsList>();
+	private HashMap<Integer, Integer> docSize = new HashMap<Integer, Integer>();
+	private HashMap<Integer, Double> pageRank;
+	int N = 0;
+	private static boolean PAGE = false;
+	private static boolean DEBUG = false;
 
+	// private static String PAGERANKFILE = "ir/tmp";
+	// private static String PAGERANKFILE = "/var/tmp/MC3";
+	private static String PAGERANKFILE = "/var/tmp/MC4";
 
-
-    /**
-     *  Returns the postings for a specific term, or null
-     *  if the term is not in the index.
-     */
-    public PostingsList getPostings( String token ) {    	
-    	return index.get(token);
-    }
-
-
-    /**
-     *  Searches the index for postings matching the query in @code{searchterms}.
-     */
-    public PostingsList search( LinkedList<String> searchTerms, int queryType ) {
-    	if(pageRank == null && PAGE){
-    		System.err.println("Initializing page rank...");
-    		pageRank = readPageRank();
-    		System.err.println("Done.");
-    	}
-
-	
-    	
-    	if( queryType == Index.RANKED_QUERY){
-	    PostingsList pll = rankedSearch(searchTerms);
-	    for( PostingsEntry pl : pll.getList() ){
-		System.out.println("result: " + docIDs.get(""+pl.docID));
-	    }
-
-	    PostingsEntry pl = pll.getList().getFirst();
-	    int docID = pl.docID;
-	    String file = docIDs.get(""+docID);
-	    System.err.println(file);
-	    try{
-		FileReader reader = new FileReader( new File(file));
-		SimpleTokenizer tok = new SimpleTokenizer( reader );
-		int offset = 0;
-		HashMap<String,Double> hm = new HashMap<String,Double>();
-		while ( tok.hasMoreTokens() ) {
-		    String str = tok.nextToken();
-		    hm.put(str, new Double(tfIdf(str,docID))); 
-		    offset++;
-		}
-		LinkedList<Mupp> ll = new LinkedList<Mupp>();
-		for( String key : hm.keySet()){
-		    ll.add(new Mupp(key, hm.get(key)) );
-		}
-
-		Collections.sort(ll);
+	/**
+	 * Inserts this token in the index.
+	 */
+	public void insert(String token, int docID, int offset) {
 		int i = 0;
-		for( Mupp m : ll){
-		    i++;
-		     System.out.println("S: " + m.word + " V: " +m.tfidf);
-		     if(i > 10) break;
+		if (docSize.containsKey(docID)) {
+			i = docSize.get(docID);
 		}
-		reader.close();
-	    }catch( IOException e ) {
-		e.printStackTrace();
-	    }
-	    
+		docSize.put(docID, i + 1);
 
+		N++;
+		int score = 0; // todo
+		PostingsList pl;
+		if (index.containsKey(token)) {
+			pl = getPostings(token);
+		} else {
+			pl = new PostingsList();
+			index.put(token, pl);
+		}
 
-	    return pll;
-    	}else if(searchTerms.size() == 1 ){    		
-    		return getPostings(searchTerms.getFirst());    		
-    	}else if(queryType == Index.INTERSECTION_QUERY){ // many words
-    		return startIntersection(searchTerms);    		
-    	}else if(queryType == Index.PHRASE_QUERY){ // phrase search
-    		return startPhraseSearch(searchTerms);
-    	}
-    	return null;
-    }
-    
-    private class Mupp implements Comparable<Mupp>{
-	public String word;
-	public Double tfidf;
-	public Mupp(){
-	    word = "";
-	    tfidf = new Double(0.0);
+		pl.addPostingsEntry(docID, score, offset);
+
 	}
-	public Mupp(String str, Double tfidf){
-	    word = str;
-	    this.tfidf = tfidf;
+
+	/**
+	 * Returns the postings for a specific term, or null if the term is not in
+	 * the index.
+	 */
+	public PostingsList getPostings(String token) {
+		return index.get(token);
+	}
+
+	/**
+	 * Searches the index for postings matching the query in @code{searchterms}.
+	 */
+	public PostingsList search(LinkedList<String> searchTerms, int queryType) {
+
+		if (queryType == Index.RANKED_QUERY) {
+			PostingsList pll = rankedSearch(searchTerms);
+			for (PostingsEntry pl : pll.getList()) {
+				System.out.println("result: " + docIDs.get("" + pl.docID));
+		}
+
+			PostingsEntry pl = pll.getList().getFirst();
+			int docID = pl.docID;
+			String file = docIDs.get("" + docID);
+			System.err.println(file);
+			try {
+				FileReader reader = new FileReader(new File(file));
+				SimpleTokenizer tok = new SimpleTokenizer(reader);
+				int offset = 0;
+				HashMap<String, Double> hm = new HashMap<String, Double>();
+				while (tok.hasMoreTokens()) {
+					String str = tok.nextToken();
+					hm.put(str, new Double(tfIdf(str, docID)));
+					offset++;
+				}
+				LinkedList<Word> ll = new LinkedList<Word>();
+				for (String key : hm.keySet()) {
+					ll.add(new Word(key, hm.get(key)));
+				}
+
+				Collections.sort(ll);
+				int i = 0;
+				for (Word m : ll) {
+					i++;
+					System.out.println("S: " + m.word + " V: " + m.tfidf);
+					if (i > 10)
+						break;
+				}
+				reader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			return pll;
+		} else if (searchTerms.size() == 1) {
+			return getPostings(searchTerms.getFirst());
+		} 
+		
+		return null;
 	}
 	
-	 public int compareTo(Mupp o) {
-	     return Double.compare( o.tfidf, tfidf);
-	 }	
-    }
-   
-    public double tfIdf(String term , int docID){
-        PostingsList p1 = getPostings(term);  //Documents containing term
-        int NP = docLengths.size();            // Number of documents
-        int df = getPostings(term).size();    //Number of documents where term occur
-        
-        double idf = Math.log10(NP/df);        //Inverse term frequency
-        double tf = p1.getDocIdList(docID) == null ? 0 : p1.getDocIdList(docID).wordPos.size() ; 
-	//Number of occurence of the term in document (based on docID)
-        double wf = (1+Math.log10(tf)); //Weighted tf
-        System.out.println("tf: "+tf);
-        System.out.println("idf: "+idf);
-        return wf*idf;
-       
-    }
-    
+	private class Word implements Comparable<Word> {
+		public String word;
+		public Double tfidf;
 
-
-    private PostingsList rankedSearch(LinkedList<String> searchTerms){
-    	HashMap<String,Integer> terms = new HashMap<String,Integer>();		
-		LinkedList<PostingsList> pl = new LinkedList<PostingsList>();
-		// Get unique search terms, and count their frequency		
-		for( String s : searchTerms){
-			int tmp = 0;
-			if(terms.containsKey(s)){
-				 tmp = terms.get(s);
-			}
-			terms.put(s,++tmp);    			
+		public Word() {
+			word = "";
+			tfidf = new Double(0.0);
 		}
-		
-		
+
+		public Word(String str, Double tfidf) {
+			word = str;
+			this.tfidf = tfidf;
+		}
+
+		public int compareTo(Word o) {
+			return Double.compare(o.tfidf, tfidf);
+		}
+	}
+
+	public double tfIdf(String term, int docID) {
+		PostingsList p1 = getPostings(term); // Documents containing term
+		int NP = docLengths.size(); // Number of documents
+		int df = getPostings(term).size(); // Number of documents where term
+											// occur
+
+		double idf = Math.log10(NP / df); // Inverse term frequency
+		double tf = p1.getDocIdList(docID) == null ? 0
+				: p1.getDocIdList(docID).wordPos.size();
+		// Number of occurence of the term in document (based on docID)
+		double wf = (1 + Math.log10(tf)); // Weighted tf
+		System.out.println("tf: " + tf);
+		System.out.println("idf: " + idf);
+		return wf * idf;
+
+	}
+
+	private PostingsList rankedSearch(LinkedList<String> searchTerms) {
+		HashMap<String, Integer> terms = new HashMap<String, Integer>();
+		LinkedList<PostingsList> pl = new LinkedList<PostingsList>();
+		// Get unique search terms, and count their frequency
+		for (String s : searchTerms) {
+			int tmp = 0;
+			if (terms.containsKey(s)) {
+				tmp = terms.get(s);
+			}
+			terms.put(s, ++tmp);
+		}
+
 		Set<String> key = terms.keySet();
-		
+
 		HashSet<Integer> docIds = new HashSet<Integer>();
-		
+
 		// Get all postingslist for the search, and add all docId's
-		for(String s : key){
+		for (String s : key) {
 			PostingsList tmp = getPostings(s);
 			pl.add(tmp);
-			if(tmp != null){
-    			for(PostingsEntry pe : tmp.getList() ){
-    				docIds.add(pe.docID);
-    			}
+			if (tmp != null) {
+				for (PostingsEntry pe : tmp.getList()) {
+					docIds.add(pe.docID);
+				}
 			}
 		}
-		
+
 		Object[] docIdSet = docIds.toArray();
-		
-		double [] qv = new double[terms.size()]; // query vector
-		double [][] dm = new double[docIds.size()][terms.size()]; // document matrix
-		
+
+		double[] qv = new double[terms.size()]; // query vector
+		double[][] dm = new double[docIds.size()][terms.size()]; // document
+																	// matrix
+
 		int i = 0;
-		for(String s : key){ // compute tf-idf for query
+		for (String s : key) { // compute tf-idf for query
 			PostingsList currentTerm = pl.get(i); // This term's postingsList
-			if(currentTerm != null){
-    			double df = (double)currentTerm.size() +1;
-    			double idf = Math.log10((docSize.size()+1.0)/df);    			
-    			qv[i] = idf * (1 + Math.log10((double)terms.get(s)));    			
-    			//qv[i] = idf *(double)terms.get(s);
-    			for(int j =0; j< dm.length; ++j){
-    				// Vi mÃ¥ste ha PE fÃ¶r DOCID och Term    				
-    				int docID = (Integer)docIdSet[j];
-    				PostingsEntry pe = currentTerm.getDocIdList(docID);
-    				double tmp_tf = 0;
-    				if(pe != null)
-    					tmp_tf = (double) pe.wordPos.size();
-    				if( tmp_tf > 0 ){
-    					tmp_tf = 1.0 + Math.log10(tmp_tf);
-    				}
-    				dm[j][i] = idf * tmp_tf;
-    			}
-			}else{
-				for(int j =0; j< dm.length; ++j){
+			if (currentTerm != null) {
+				double df = (double) currentTerm.size() + 1;
+				double idf = Math.log10((docSize.size() + 1.0) / df);
+				qv[i] = idf * (1 + Math.log10((double) terms.get(s)));
+				// qv[i] = idf *(double)terms.get(s);
+				for (int j = 0; j < dm.length; ++j) {
+					// Vi måste ha PE för DOCID och Term
+					int docID = (Integer) docIdSet[j];
+					PostingsEntry pe = currentTerm.getDocIdList(docID);
+					double tmp_tf = 0;
+					if (pe != null)
+						tmp_tf = (double) pe.wordPos.size();
+					if (tmp_tf > 0) {
+						tmp_tf = 1.0 + Math.log10(tmp_tf);
+					}
+					dm[j][i] = idf * tmp_tf;
+				}
+			} else {
+				for (int j = 0; j < dm.length; ++j) {
 					dm[j][i] = 0;
 				}
 			}
@@ -228,194 +214,138 @@ public class HashedIndex implements Index {
 		}
 
 		// calculate score
-		double [] score = cos(qv,dm);		
-		
-		
-		
-		for( i =0; i< score.length; ++i){    			
-			if(PAGE){ // Page rank enabled
-				double [] pr = new double[score.length];
+		double[] score = cos(qv, dm);
+
+		for (i = 0; i < score.length; ++i) {
+			if (PAGE) { // Page rank enabled
+				double[] pr = new double[score.length];
 				double sum = 0.0;
-				Double tmp;		
+				Double tmp;
 				// Fetch pageRank for our documents, and calculate squared sum
-				for(int j = 0; j<score.length; ++j){
-					tmp = pageRank.get( (Integer) docIdSet[j] );
-					if(tmp == null){    			
+				for (int j = 0; j < score.length; ++j) {
+					tmp = pageRank.get((Integer) docIdSet[j]);
+					if (tmp == null) {
 						tmp = 0.0;
 					}
 					pr[j] = tmp;
-					sum += pr[j]*pr[j];
+					sum += pr[j] * pr[j];
 				}
-				
-				// Normalize page rank 
+
+				// Normalize page rank
 				double norm = Math.sqrt(sum);
-				for(int j = 0 ; j< score.length; ++j){
-					pr[j] = pr[j]/norm;
+				for (int j = 0; j < score.length; ++j) {
+					pr[j] = pr[j] / norm;
 				}
-				
-				score[i] = score[i]/Math.log10(docSize.get( (Integer)docIdSet[i] )) + pr[i]*score[i]/Math.log10(docSize.get( (Integer)docIdSet[i] ));
-			}else{ // disabled
-				score[i] = score[i]/Math.log10(docSize.get( (Integer)docIdSet[i] ));
+
+				score[i] = score[i]
+						/ Math.log10(docSize.get((Integer) docIdSet[i]))
+						+ pr[i] * score[i]
+						/ Math.log10(docSize.get((Integer) docIdSet[i]));
+			} else { // disabled
+				score[i] = score[i]
+						/ Math.log10(docSize.get((Integer) docIdSet[i]));
 			}
 		}
-		
-		if(DEBUG){
-			 // Print scores
+
+		if (DEBUG) {
+			// Print scores
 			System.out.println("scores: ");
-			for(i =0; i<score.length; ++i)
+			for (i = 0; i < score.length; ++i)
 				System.out.print(score[i] + " ");
 			System.out.println();
 			// print vectors
 			System.out.print("Query v: ");
-			for(i = 0; i< qv.length; ++i){
-				System.out.print(qv[i]+ " ");
+			for (i = 0; i < qv.length; ++i) {
+				System.out.print(qv[i] + " ");
 			}
 			System.out.println();
-			for(i = 0; i< dm.length; ++i){
+			for (i = 0; i < dm.length; ++i) {
 				System.out.print("Doc v: ");
-	    		for(int j = 0; j< dm[i].length; ++j){
-	    			System.out.print(dm[i][j]+ " ");
-	    		}
-	    		System.out.println();
+				for (int j = 0; j < dm[i].length; ++j) {
+					System.out.print(dm[i][j] + " ");
+				}
+				System.out.println();
 			}
-			
+
 		}
 		// Sort output
-		LinkedList<PostingsEntry> pes = new LinkedList<PostingsEntry>();		
-		for(i = 0; i< dm.length; ++i){
-			pes.add(new PostingsEntry((Integer)docIdSet[i],score[i],0));
-		}    		
+		LinkedList<PostingsEntry> pes = new LinkedList<PostingsEntry>();
+		for (i = 0; i < dm.length; ++i) {
+			pes.add(new PostingsEntry((Integer) docIdSet[i], score[i], 0));
+		}
 		PostingsList ret = new PostingsList();
 		Collections.sort(pes);
 		ret.addList(pes);
-		
-    	return ret;
-    }
-    
-    
-    /**#####################################  COSINE CALCULATION ##################################### */
-    private double[] cos(double [] qv, double[][] dm){
-    	double qnorm =0 ;
-    	for(int i =0; i< qv.length; ++i){
-    		qnorm += qv[i]*qv[i];
-    	}
-    	qnorm = Math.sqrt(qnorm);
-    	double [] dnorm = new double[dm.length];
-    	double [] score = new double[dm.length];
-    	for(int i = 0; i< dm.length; ++i){
-    		dnorm[i] =0.0;
-    		for(int j = 0; j< dm[i].length; ++j){
-    			dnorm[i] += dm[i][j]*dm[i][j];
-    		}
-    		dnorm[i] = Math.sqrt(dnorm[i]);
-    	}
-    	
-    	for(int i = 0; i< dm.length; ++i){
-    		score[i] = 0.0;
-    		for(int j = 0; j< dm[i].length; ++j){
-    			score[i] += qv[j]*dm[i][j];//(qnorm*dnorm[i]);
-    		}
-    		score[i] = score[i];//(qnorm);//*dnorm[i]);
-    	}
-    	return score;    	
-    }
-    
-    private PostingsList startPhraseSearch(LinkedList<String> searchTerms){
-		PostingsList ids = startIntersection(searchTerms);
-		PostingsList ans = new PostingsList();
-		
-		for(int i = 0; i < ids.size(); ++i){ // for each doc
-			ArrayList<LinkedList<Integer>> words = new ArrayList<LinkedList<Integer>>();	
-			int docId = ids.get(i).docID;
-			
-			// Initialize words
-			for(String s : searchTerms){
-				PostingsList tmp = getPostings(s);
-				for(PostingsEntry pe : tmp.getList()){
-					if(pe.docID == docId){
-						words.add(pe.wordPos);
-					}
-				}				 
+
+		return ret;
+	}
+
+	/**
+	 * ##################################### COSINE CALCULATION
+	 * #####################################
+	 */
+	private double[] cos(double[] qv, double[][] dm) {
+		double qnorm = 0;
+		for (int i = 0; i < qv.length; ++i) {
+			qnorm += qv[i] * qv[i];
+		}
+		qnorm = Math.sqrt(qnorm);
+		double[] dnorm = new double[dm.length];
+		double[] score = new double[dm.length];
+		for (int i = 0; i < dm.length; ++i) {
+			dnorm[i] = 0.0;
+			for (int j = 0; j < dm[i].length; ++j) {
+				dnorm[i] += dm[i][j] * dm[i][j];
 			}
-			
-			for(Integer j : words.get(0) ){
-				if(phraseSearch(j+1, words,1)){
-					ans.add(ids.get(i).docID);
-				}
+			dnorm[i] = Math.sqrt(dnorm[i]);
+		}
+
+		for (int i = 0; i < dm.length; ++i) {
+			score[i] = 0.0;
+			for (int j = 0; j < dm[i].length; ++j) {
+				score[i] += qv[j] * dm[i][j];// (qnorm*dnorm[i]);
+			}
+			score[i] = score[i];// (qnorm);//*dnorm[i]);
+		}
+		return score;
+	}
+
+	
+	private boolean phraseSearch(int offset,
+			ArrayList<LinkedList<Integer>> wordPos, int idx) {
+		if (idx == wordPos.size())
+			return true;
+		return wordPos.get(idx).contains(offset)
+				&& phraseSearch(offset + 1, wordPos, idx + 1);
+	}
+
+	
+
+	private PostingsList intersection(PostingsList p1, PostingsList p2) {
+
+		PostingsList ans = new PostingsList();
+		int i = 0, j = 0;
+		PostingsEntry docA, docB;
+		while (i != p1.size() && j != p2.size()) {
+			docA = p1.get(i);
+			docB = p2.get(j);
+			if (docA.docID == docB.docID) {
+				ans.add(docA.docID);
+				i++;
+				j++;
+			} else if (docA.docID < docB.docID) {
+				i++;
+			} else {
+				j++;
+
 			}
 		}
 		return ans;
-    	
-    }
-    
-    private boolean phraseSearch(int offset, ArrayList<LinkedList<Integer>> wordPos, int idx){
-    	if(idx == wordPos.size() )return true;    	
-    	return wordPos.get(idx).contains(offset) && phraseSearch(offset+1,wordPos,idx+1);    	
-    }
-    
-    
-    
-    
-    
-    private PostingsList startIntersection(LinkedList<String> searchterms){
-    	PostingsList ans = new PostingsList();
-		ans = getPostings(searchterms.getFirst());
-		PostingsList b = null;
-		for(int i = 1; i< searchterms.size(); i++){				
-			b = getPostings(searchterms.get(i));
-			ans = intersection(ans,b);    			
-		}
-		return ans;	
-    }
-    
-    private PostingsList intersection(PostingsList p1, PostingsList p2){
-    	
-    	PostingsList ans = new PostingsList();
-    	int i=0,j=0;
-    	PostingsEntry docA,docB;
-    	while(i != p1.size() && j != p2.size()){
-    		docA = p1.get(i);
-    		docB = p2.get(j);
-    		if(docA.docID == docB.docID){    			
-    			ans.add( docA.docID);
-    			i++;
-    			j++;
-    		}else if( docA.docID < docB.docID){
-    			i++;
-    		}else{
-    			j++;
-    			
-    		}   		
-    	}
-    	return ans;
-    }
+	}
 
-    public static HashMap<Integer,Double> readPageRank(){
-    	HashMap<Integer,Double> fisk = new HashMap<Integer,Double>();
-    	try{
-    		FileInputStream fstream = new FileInputStream(PAGERANKFILE);
-    		DataInputStream in = new DataInputStream(fstream);
-    		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-    		String strLine;
-    		while ((strLine = br.readLine()) != null)   {
-    			//System.out.println (strLine);
-    			String [] apa = strLine.split(" : ");
-    			Integer japan = Integer.parseInt(apa[0].trim());
-    			Double banan = Double.parseDouble(apa[1].trim());
-    			fisk.put(japan,banan);    			
-    		}
-
-    		in.close();
-    	}catch (Exception e){//Catch exception if any
-    		System.err.println("Error: " + e.getMessage());
-    	}
-    	return fisk;
-    }
-    
-
-    /**
-     *  No need for cleanup in a HashedIndex.
-     */
-    public void cleanup() {
-    }
+	/**
+	 * No need for cleanup in a HashedIndex.
+	 */
+	public void cleanup() {
+	}
 }
