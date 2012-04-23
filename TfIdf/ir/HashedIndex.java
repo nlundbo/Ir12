@@ -109,14 +109,15 @@ public class HashedIndex implements Index {
 		return null;
 	}
 
+	
 	/**
-	 * Get hashmap 
+	 * Get hashmap containing word/tfidf pairs for a given document.
 	 * @param docID
 	 * @param file
-	 * @return Hashmap containing word/tfidf pairs - null if errornous
+	 * @return Hashmap containing word/tfidf pairs - null if error
 	 */
 	private HashMap<String, Double> extractTfIdfFromDoc(int docID, String file){
-		HashMap<String, Double> hm;
+		HashMap<String, Double> hm = null;
 		
 		try{
 		FileReader reader = new FileReader(new File(file));
@@ -137,9 +138,6 @@ public class HashedIndex implements Index {
 			// TODO: handle exception
 		}
 			
-		
-			
-		
 		return hm;
 	}
 
