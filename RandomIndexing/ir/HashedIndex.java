@@ -23,7 +23,7 @@ import java.io.*;
  */
 public class HashedIndex implements Index {
 
-    /** The index as a hashtable. */
+    /** The index as a hashtable.*/
     private HashMap<String,PostingsList> index = new HashMap<String,PostingsList>();
     private HashMap<Integer,Integer> docSize = new HashMap<Integer,Integer>();
     private HashMap<Integer,Double> pageRank;
