@@ -43,7 +43,6 @@ public class HashedIndex implements Index {
 			i = docSize.get(docID);
 		}
 		docSize.put(docID, i + 1);
-
 		N++;
 		int score = 0; // todo
 		PostingsList pl;
@@ -117,9 +116,11 @@ public class HashedIndex implements Index {
 		for (LinkedList<Word> ll : DKMatrix) {
 			for (Word w : ll) {
 				if(onlyIntersection && getPostings(query)!=null && getPostings(w.toString())!=null){
-					wordScores.put(w.toString(), (double)intersection(getPostings(query),getPostings(w.toString())).size());
+					wordScores.put(w.toString(), Math.log10((double)intersection(getPostings(query),getPostings(w.toString())).size()));
+					System.out.println("Intersections for "+w.toString() + " is "+w.tfidf);
 				} else if(getPostings(query)!=null && getPostings(w.toString())!=null){
-					wordScores.put(w.toString(), w.tfidf*intersection(getPostings(query),getPostings(w.toString())).size());
+					wordScores.put(w.toString(), w.tfidf+intersection(getPostings(query),getPostings(w.toString())).size());
+					System.out.println("Score for "+w.toString() + " is "+w.tfidf+intersection(getPostings(query),getPostings(w.toString())).size() + ": "+intersection(getPostings(query),getPostings(w.toString())).size() + " intersections");
 				} else if(getPostings(query)==null&&getPostings(w.toString())==null) {
 					System.err.println("Postingslist for "+ query+" and "+w.toString()+" is null");
 				} else if(getPostings(query)==null){
@@ -137,6 +138,7 @@ public class HashedIndex implements Index {
 			wordList.add(w);
 		}
 		Collections.sort(wordList);
+		System.out.println("The best hit is "+wordList.getFirst() + " with score "+wordList.getFirst().tfidf);
 		return wordList;
 	}
 	
