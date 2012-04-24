@@ -27,6 +27,8 @@ public class HashedIndex implements Index {
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
 
+	private final int D = 10; // number of top ranking documents to retrieve
+	private final int K = 5; // number of top ranking words to retrieve
 	private final int D = 30; // number of top ranking documents to retrieve
 	private final int K = 20; // number of top ranking words to retrieve
 
@@ -92,6 +94,11 @@ public class HashedIndex implements Index {
 				// TODO Ignore documents shorter than 5 words
 				DKMatrix.add(getTopWords(docID, file));
 			}
+
+			for (LinkedList<Word> ll : DKMatrix) {
+				for (Word w : ll) {
+					returnList.add("S: " + w.word + " V: " + w.tfidf);
+				}
 			
 			LinkedList<Word> ll = wordSumOfPos(DKMatrix, 5);
 			for (Word w : ll) {
@@ -103,6 +110,33 @@ public class HashedIndex implements Index {
 		}
 
 		return null;
+	}
+	
+	public LinkedList<String> intersectionRank(LinkedList<LinkedList<Word>> DKMatrix, String query) {
+		boolean onlyIntersection = true; // otherwise, multiply by tfidf
+		HashMap<String,Double> wordScores = new HashMap<String,Double>();
+		
+		for (LinkedList<Word> ll : DKMatrix) {
+			for (Word w : ll) {
+				if(onlyIntersection){
+					wordScores.put(w.toString(), (double)intersection(getPostings(query),getPostings(w.toString())).size());
+				} else {
+					wordScores.put(w.toString(), w.tfidf*intersection(getPostings(query),getPostings(w.toString())).size());
+				}
+			}
+		}
+		LinkedList<String> returnList = new LinkedList<String>();
+		LinkedList<Word> wordList = new LinkedList<Word>();
+		Set<String> wordSet = wordScores.keySet();
+		for(String s : wordSet) {
+			Word w = new Word(s,wordScores.get(s));
+			wordList.add(w);
+		}
+		Collections.sort(wordList);
+		for(Word w : wordList) {
+			returnList.add(w.toString());
+		}
+		return returnList;
 	}
 	
 	/**
@@ -197,8 +231,7 @@ public class HashedIndex implements Index {
 
 	private class Word implements Comparable<Word> {
 		public String word;
-		public Double tfidf; 
-		
+		public Double tfidf;
 
 		public Word() {
 			word = "";
@@ -226,6 +259,8 @@ public class HashedIndex implements Index {
 				: p1.getDocIdList(docID).wordPos.size();
 		// Number of occurence of the term in document (based on docID)
 		double wf = (1 + Math.log10(tf)); // Weighted tf
+//		System.out.println("tf: " + tf);
+//		System.out.println("idf: " + idf);
 		return wf * idf;
 
 	}

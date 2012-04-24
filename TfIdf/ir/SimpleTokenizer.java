@@ -228,7 +228,7 @@ public class SimpleTokenizer {
 				}
 			}catch (Exception e){
 			}
-	}
+		}
 	}
 }
 
