@@ -23,7 +23,7 @@ public class HashedIndex implements Index {
 	/** The index as a hashtable. */
 	private HashMap<String, PostingsList> index = new HashMap<String, PostingsList>();
 	private HashMap<Integer, Integer> docSize = new HashMap<Integer, Integer>();
-	private HashMap<Integer, Double> pageRank;
+	
 	int N = 0;
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
@@ -31,9 +31,6 @@ public class HashedIndex implements Index {
 	private final int D = 50; // number of top ranking documents to retrieve
 	private final int K = 20; // number of top ranking words to retrieve
 
-	// private static String PAGERANKFILE = "ir/tmp";
-	// private static String PAGERANKFILE = "/var/tmp/MC3";
-	private static String PAGERANKFILE = "/var/tmp/MC4";
 
 	/**
 	 * Inserts this token in the index.
@@ -71,7 +68,7 @@ public class HashedIndex implements Index {
 	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
-		boolean meidi = true;
+		boolean meidi = false;
 		LinkedList<String> returnList = new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
 			PostingsList pll = rankedSearch(searchTerms);
@@ -175,7 +172,7 @@ public class HashedIndex implements Index {
 			}
 		}
 
-		LinkedList<Word> rankedList = new LinkedList<HashedIndex.Word>();
+		LinkedList<Word> rankedList = new LinkedList<Word>();
 
 		for(String key : scoreBoard.keySet())
 		{
@@ -226,7 +223,7 @@ public class HashedIndex implements Index {
 
 		Collections.sort(ll);
 
-		LinkedList<Word> returnlist = new LinkedList<HashedIndex.Word>();
+		LinkedList<Word> returnlist = new LinkedList<Word>();
 
 		for (int i = 0; i < K; i++) {
 			returnlist.addLast(ll.pop());
@@ -235,29 +232,7 @@ public class HashedIndex implements Index {
 		return returnlist;
 	}
 
-	private class Word implements Comparable<Word> {
-		public String word;
-		public Double tfidf;
 
-		public Word() {
-			word = "";
-			tfidf = new Double(0.0);
-		}
-
-		public Word(String str, Double tfidf) {
-			word = str;
-			this.tfidf = tfidf;
-		}
-
-		public int compareTo(Word o) {
-			return Double.compare(o.tfidf, tfidf);
-		}
-
-		@Override
-		public String toString() {
-			return word;
-		}
-	}
 
 	public double tfIdf(String term, int docID) {
 		PostingsList p1 = getPostings(term); // Documents containing term
@@ -341,34 +316,8 @@ public class HashedIndex implements Index {
 		double[] score = cos(qv, dm);
 
 		for (i = 0; i < score.length; ++i) {
-			if (PAGE) { // Page rank enabled
-				double[] pr = new double[score.length];
-				double sum = 0.0;
-				Double tmp;
-				// Fetch pageRank for our documents, and calculate squared sum
-				for (int j = 0; j < score.length; ++j) {
-					tmp = pageRank.get((Integer) docIdSet[j]);
-					if (tmp == null) {
-						tmp = 0.0;
-					}
-					pr[j] = tmp;
-					sum += pr[j] * pr[j];
-				}
-
-				// Normalize page rank
-				double norm = Math.sqrt(sum);
-				for (int j = 0; j < score.length; ++j) {
-					pr[j] = pr[j] / norm;
-				}
-
-				score[i] = score[i]
-						/ Math.log10(docSize.get((Integer) docIdSet[i]))
-						+ pr[i] * score[i]
-								/ Math.log10(docSize.get((Integer) docIdSet[i]));
-			} else { // disabled
 				score[i] = score[i]
 						/ Math.log10(docSize.get((Integer) docIdSet[i]));
-			}
 		}
 
 		if (DEBUG) {
