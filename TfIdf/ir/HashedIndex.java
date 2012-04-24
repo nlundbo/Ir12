@@ -105,6 +105,33 @@ public class HashedIndex implements Index {
 		return null;
 	}
 
+	public LinkedList<String> intersectionRank(LinkedList<LinkedList<Word>> DKMatrix, String query) {
+		boolean onlyIntersection = true; // otherwise, multiply by tfidf
+		HashMap<String,Double> wordScores = new HashMap<String,Double>();
+		
+		for (LinkedList<Word> ll : DKMatrix) {
+			for (Word w : ll) {
+				if(onlyIntersection){
+					wordScores.put(w.toString(), (double)intersection(getPostings(query),getPostings(w.toString())).size());
+				} else {
+					wordScores.put(w.toString(), w.tfidf*intersection(getPostings(query),getPostings(w.toString())).size());
+				}
+			}
+		}
+		LinkedList<String> returnList = new LinkedList<String>();
+		LinkedList<Word> wordList = new LinkedList<Word>();
+		Set<String> wordSet = wordScores.keySet();
+		for(String s : wordSet) {
+			Word w = new Word(s,wordScores.get(s));
+			wordList.add(w);
+		}
+		Collections.sort(wordList);
+		for(Word w : wordList) {
+			returnList.add(w.toString());
+		}
+		return returnList;
+	}
+	
 	/**
 	 * Get hashmap containing word/tfidf pairs for a given document.
 	 * 
