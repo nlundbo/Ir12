@@ -27,8 +27,6 @@ public class HashedIndex implements Index {
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
 
-	private final int D = 10; // number of top ranking documents to retrieve
-	private final int K = 5; // number of top ranking words to retrieve
 	private final int D = 30; // number of top ranking documents to retrieve
 	private final int K = 20; // number of top ranking words to retrieve
 
@@ -94,11 +92,6 @@ public class HashedIndex implements Index {
 				// TODO Ignore documents shorter than 5 words
 				DKMatrix.add(getTopWords(docID, file));
 			}
-
-			for (LinkedList<Word> ll : DKMatrix) {
-				for (Word w : ll) {
-					returnList.add("S: " + w.word + " V: " + w.tfidf);
-				}
 			
 			LinkedList<Word> ll = wordSumOfPos(DKMatrix, 5);
 			for (Word w : ll) {
