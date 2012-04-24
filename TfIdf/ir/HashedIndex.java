@@ -27,8 +27,8 @@ public class HashedIndex implements Index {
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
 
-	private final int D = 10; // number of top ranking documents to retrieve
-	private final int K = 5; // number of top ranking words to retrieve
+	private final int D = 50; // number of top ranking documents to retrieve
+	private final int K = 20; // number of top ranking words to retrieve
 
 	// private static String PAGERANKFILE = "ir/tmp";
 	// private static String PAGERANKFILE = "/var/tmp/MC3";
@@ -43,7 +43,6 @@ public class HashedIndex implements Index {
 			i = docSize.get(docID);
 		}
 		docSize.put(docID, i + 1);
-
 		N++;
 		int score = 0; // todo
 		PostingsList pl;
@@ -71,6 +70,7 @@ public class HashedIndex implements Index {
 	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
+		boolean meidi = true;
 		LinkedList<String> returnList = new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
 			PostingsList pll = rankedSearch(searchTerms);
@@ -92,12 +92,16 @@ public class HashedIndex implements Index {
 				// TODO Ignore documents shorter than 5 words
 				DKMatrix.add(getTopWords(docID, file));
 			}
-
-			for (LinkedList<Word> ll : DKMatrix) {
-				for (Word w : ll) {
-					returnList.add("S: " + w.word + " V: " + w.tfidf);
-				}
+			LinkedList<Word> ll = new LinkedList<Word>();
+			if(!meidi) {
+				ll = wordSumOfPos(DKMatrix, 5);
+			} else {
+				ll = intersectionRank(DKMatrix, searchTerms.getFirst());
 			}
+			for (Word w : ll) {
+				returnList.add("S: " + w.word + " V: " + w.tfidf);
+			}
+
 
 			return returnList;
 		}
@@ -105,6 +109,86 @@ public class HashedIndex implements Index {
 		return null;
 	}
 
+	public LinkedList<Word> intersectionRank(LinkedList<LinkedList<Word>> DKMatrix, String query) {
+		boolean onlyIntersection = false; // otherwise, multiply by tfidf
+		HashMap<String,Double> wordScores = new HashMap<String,Double>();
+
+		for (LinkedList<Word> ll : DKMatrix) {
+			for (Word w : ll) {
+				if(onlyIntersection && getPostings(query)!=null && getPostings(w.toString())!=null){
+					wordScores.put(w.toString(), Math.log10((double)intersection(getPostings(query),getPostings(w.toString())).size()));
+					System.out.println("Intersections for "+w.toString() + " is "+intersection(getPostings(query),getPostings(w.toString())).size());
+				} else if(getPostings(query)!=null && getPostings(w.toString())!=null){
+					wordScores.put(w.toString(), w.tfidf+intersection(getPostings(query),getPostings(w.toString())).size());
+					System.out.println("Score for "+w.toString() + " is "+w.tfidf+intersection(getPostings(query),getPostings(w.toString())).size() + ": "+intersection(getPostings(query),getPostings(w.toString())).size() + " intersections");
+				} else if(getPostings(query)==null&&getPostings(w.toString())==null) {
+					System.err.println("Postingslist for "+ query+" and "+w.toString()+" is null");
+				} else if(getPostings(query)==null){
+					System.err.println("Postingslist for "+ query+" is null");
+				} else {
+					System.err.println("Postingslist for "+ w.toString()+" is null");
+				}
+			}
+		}
+		//LinkedList<String> returnList = new LinkedList<String>();
+		LinkedList<Word> wordList = new LinkedList<Word>();
+		Set<String> wordSet = wordScores.keySet();
+		for(String s : wordSet) {
+			Word w = new Word(s,wordScores.get(s));
+			wordList.add(w);
+		}
+		Collections.sort(wordList);
+		if(wordList.getFirst()!=null) {
+			System.out.println("The best hit is "+wordList.getFirst() + " with score "+wordList.getFirst().tfidf);
+		}
+		return wordList;
+	}
+
+	/**
+	 * Take a doc/word matrix and rank them according to the 
+	 * sum of ranking positions.  
+	 * Example. 
+	 * The matrix consists of <i>k</i> columns and the <i>r</i> rows. 
+	 * The word W occurs in columns 1, 5 and 4 in different rows. 
+	 * The score for W would then be  (k-1)+(k-5)+(k-4)=3k-10 
+	 * Get the <i>n</i> most 
+	 * @return
+	 */
+	public LinkedList<Word> wordSumOfPos(LinkedList<LinkedList<Word>> DKMatrix, int n)
+	{
+		HashMap<String,Double> scoreBoard = new HashMap<String, Double>();
+
+		for(LinkedList<Word> lw: DKMatrix)
+		{
+			int i = lw.size();
+			for(Word w: lw)
+			{
+				if(scoreBoard.containsKey(w.word))
+				{
+					scoreBoard.put(w.word, scoreBoard.get(w.word)+i);
+				}else
+				{
+					scoreBoard.put(w.word, new Double(i));
+				}
+				i--;
+			}
+		}
+
+		LinkedList<Word> rankedList = new LinkedList<HashedIndex.Word>();
+
+		for(String key : scoreBoard.keySet())
+		{
+			rankedList.add(new Word(key,scoreBoard.get(key)));
+		}
+		Collections.sort(rankedList);
+		LinkedList<Word> returnList = new LinkedList<Word>();
+
+		for(int i = 0 ; i < n ; i++)
+		{
+			returnList.addLast(rankedList.get(i));
+		}
+		return returnList;
+	}
 	/**
 	 * Get hashmap containing word/tfidf pairs for a given document.
 	 * 
@@ -167,21 +251,26 @@ public class HashedIndex implements Index {
 		public int compareTo(Word o) {
 			return Double.compare(o.tfidf, tfidf);
 		}
+
+		@Override
+		public String toString() {
+			return word;
+		}
 	}
 
 	public double tfIdf(String term, int docID) {
 		PostingsList p1 = getPostings(term); // Documents containing term
 		int NP = docLengths.size(); // Number of documents
 		int df = getPostings(term).size(); // Number of documents where term
-											// occur
+		// occur
 
 		double idf = Math.log10(NP / df); // Inverse term frequency
 		double tf = p1.getDocIdList(docID) == null ? 0
 				: p1.getDocIdList(docID).wordPos.size();
 		// Number of occurence of the term in document (based on docID)
 		double wf = (1 + Math.log10(tf)); // Weighted tf
-//		System.out.println("tf: " + tf);
-//		System.out.println("idf: " + idf);
+		//		System.out.println("tf: " + tf);
+		//		System.out.println("idf: " + idf);
 		return wf * idf;
 
 	}
@@ -217,7 +306,7 @@ public class HashedIndex implements Index {
 
 		double[] qv = new double[terms.size()]; // query vector
 		double[][] dm = new double[docIds.size()][terms.size()]; // document
-																	// matrix
+		// matrix
 
 		int i = 0;
 		for (String s : key) { // compute tf-idf for query
@@ -274,7 +363,7 @@ public class HashedIndex implements Index {
 				score[i] = score[i]
 						/ Math.log10(docSize.get((Integer) docIdSet[i]))
 						+ pr[i] * score[i]
-						/ Math.log10(docSize.get((Integer) docIdSet[i]));
+								/ Math.log10(docSize.get((Integer) docIdSet[i]));
 			} else { // disabled
 				score[i] = score[i]
 						/ Math.log10(docSize.get((Integer) docIdSet[i]));
