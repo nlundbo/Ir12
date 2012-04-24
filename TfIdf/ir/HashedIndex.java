@@ -71,6 +71,7 @@ public class HashedIndex implements Index {
 	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
+		boolean meidi = true;
 		LinkedList<String> returnList = new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
 			PostingsList pll = rankedSearch(searchTerms);
@@ -92,8 +93,12 @@ public class HashedIndex implements Index {
 				// TODO Ignore documents shorter than 5 words
 				DKMatrix.add(getTopWords(docID, file));
 			}
-			
-			LinkedList<Word> ll = wordSumOfPos(DKMatrix, 5);
+			LinkedList<Word> ll = new LinkedList<Word>();
+			if(!meidi) {
+				ll = wordSumOfPos(DKMatrix, 5);
+			} else {
+				ll = intersectionRank(DKMatrix, searchTerms.getFirst());
+			}
 			for (Word w : ll) {
 				returnList.add("S: " + w.word + " V: " + w.tfidf);
 			}
@@ -105,7 +110,7 @@ public class HashedIndex implements Index {
 		return null;
 	}
 	
-	public LinkedList<String> intersectionRank(LinkedList<LinkedList<Word>> DKMatrix, String query) {
+	public LinkedList<Word> intersectionRank(LinkedList<LinkedList<Word>> DKMatrix, String query) {
 		boolean onlyIntersection = true; // otherwise, multiply by tfidf
 		HashMap<String,Double> wordScores = new HashMap<String,Double>();
 		
@@ -118,7 +123,7 @@ public class HashedIndex implements Index {
 				}
 			}
 		}
-		LinkedList<String> returnList = new LinkedList<String>();
+		//LinkedList<String> returnList = new LinkedList<String>();
 		LinkedList<Word> wordList = new LinkedList<Word>();
 		Set<String> wordSet = wordScores.keySet();
 		for(String s : wordSet) {
@@ -126,10 +131,7 @@ public class HashedIndex implements Index {
 			wordList.add(w);
 		}
 		Collections.sort(wordList);
-		for(Word w : wordList) {
-			returnList.add(w.toString());
-		}
-		return returnList;
+		return wordList;
 	}
 	
 	/**
