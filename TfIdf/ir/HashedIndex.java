@@ -27,8 +27,8 @@ public class HashedIndex implements Index {
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
 
-	private final int D = 10; // number of top ranking documents to retrieve
-	private final int K = 5; // number of top ranking words to retrieve
+	private final int D = 30; // number of top ranking documents to retrieve
+	private final int K = 20; // number of top ranking words to retrieve
 
 	// private static String PAGERANKFILE = "ir/tmp";
 	// private static String PAGERANKFILE = "/var/tmp/MC3";
@@ -92,19 +92,64 @@ public class HashedIndex implements Index {
 				// TODO Ignore documents shorter than 5 words
 				DKMatrix.add(getTopWords(docID, file));
 			}
-
-			for (LinkedList<Word> ll : DKMatrix) {
-				for (Word w : ll) {
-					returnList.add("S: " + w.word + " V: " + w.tfidf);
-				}
+			
+			LinkedList<Word> ll = wordSumOfPos(DKMatrix, 5);
+			for (Word w : ll) {
+				returnList.add("S: " + w.word + " V: " + w.tfidf);
 			}
+
 
 			return returnList;
 		}
 
 		return null;
 	}
-
+	
+	/**
+	 * Take a doc/word matrix and rank them according to the 
+	 * sum of ranking positions.  
+	 * Example. 
+	 * The matrix consists of <i>k</i> columns and the <i>r</i> rows. 
+	 * The word W occurs in columns 1, 5 and 4 in different rows. 
+	 * The score for W would then be  (k-1)+(k-5)+(k-4)=3k-10 
+	 * Get the <i>n</i> most 
+	 * @return
+	 */
+	public LinkedList<Word> wordSumOfPos(LinkedList<LinkedList<Word>> DKMatrix, int n)
+	{
+		HashMap<String,Double> scoreBoard = new HashMap<String, Double>();
+		
+		for(LinkedList<Word> lw: DKMatrix)
+		{
+			int i = lw.size();
+			for(Word w: lw)
+			{
+				if(scoreBoard.containsKey(w.word))
+				{
+					scoreBoard.put(w.word, scoreBoard.get(w.word)+i);
+				}else
+				{
+					scoreBoard.put(w.word, new Double(i));
+				}
+				i--;
+			}
+		}
+		
+		LinkedList<Word> rankedList = new LinkedList<HashedIndex.Word>();
+		
+		for(String key : scoreBoard.keySet())
+		{
+			rankedList.add(new Word(key,scoreBoard.get(key)));
+		}
+		Collections.sort(rankedList);
+		LinkedList<Word> returnList = new LinkedList<Word>();
+		
+		for(int i = 0 ; i < n ; i++)
+		{
+				returnList.addLast(rankedList.get(i));
+		}
+		return returnList;
+	}
 	/**
 	 * Get hashmap containing word/tfidf pairs for a given document.
 	 * 
@@ -152,7 +197,8 @@ public class HashedIndex implements Index {
 
 	private class Word implements Comparable<Word> {
 		public String word;
-		public Double tfidf;
+		public Double tfidf; 
+		
 
 		public Word() {
 			word = "";
@@ -180,8 +226,6 @@ public class HashedIndex implements Index {
 				: p1.getDocIdList(docID).wordPos.size();
 		// Number of occurence of the term in document (based on docID)
 		double wf = (1 + Math.log10(tf)); // Weighted tf
-//		System.out.println("tf: " + tf);
-//		System.out.println("idf: " + idf);
 		return wf * idf;
 
 	}
