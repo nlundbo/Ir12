@@ -212,6 +212,7 @@ public class SimpleTokenizer {
 
 	public static void main(String args []){
 		String file = null;
+		System.out.println("");
 		if(args.length > 0){
 			file = args[0];
 		}

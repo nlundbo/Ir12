@@ -9,6 +9,7 @@
 package ir;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import java.util.*;
 import java.io.*;
@@ -25,6 +26,9 @@ public class HashedIndex implements Index {
 	int N = 0;
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
+
+	private final int D = 10; // number of top ranking documents to retrieve
+	private final int K = 5; // number of top ranking words to retrieve
 
 	// private static String PAGERANKFILE = "ir/tmp";
 	// private static String PAGERANKFILE = "/var/tmp/MC3";
@@ -62,81 +66,88 @@ public class HashedIndex implements Index {
 		return index.get(token);
 	}
 
-	
 	/**
 	 * Searches the index for postings matching the query in @code{searchterms}.
 	 */
-	public LinkedList<String> search(LinkedList<String> searchTerms, int queryType) {
-		LinkedList<String> returnList= new LinkedList<String>();
+	public LinkedList<String> search(LinkedList<String> searchTerms,
+			int queryType) {
+		LinkedList<String> returnList = new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
 			PostingsList pll = rankedSearch(searchTerms);
 			for (PostingsEntry pl : pll.getList()) {
 				System.out.println("result: " + docIDs.get("" + pl.docID));
-		}
-			
-			
-			// TODO Get List docIDs from resulting postings list 
-			
-			PostingsEntry pl = pll.getList().getFirst();
-			int docID = pl.docID;
-			String file = docIDs.get("" + docID);
-			
-			//Get corresponding file given the docID TODO do it for every docID
-			System.err.println(file);
-			
-				HashMap<String, Double> hm = extractTfIdfFromDoc(docID, file);
-				LinkedList<Word> ll = new LinkedList<Word>();
-				for (String key : hm.keySet()) {
-					ll.add(new Word(key, hm.get(key)));
-				}
+			}
 
-				Collections.sort(ll);
-				int i = 0;
-				for (Word m : ll) {
-					i++;
-					returnList.add("S: " + m.word + " V: " + m.tfidf);
-					if (i > 10)
-						break;
+			LinkedList<LinkedList<Word>> DKMatrix = new LinkedList<LinkedList<Word>>();
+
+			// TODO Get List docIDs from resulting postings list
+			for (int i = 0; i < D && i < pll.getList().size() ; i++) {
+				PostingsEntry pl = pll.getList().get(i);
+				int docID = pl.docID;
+				String file = docIDs.get("" + docID);
+
+				// Get corresponding file given the docID TODO do it for every
+				// docID
+				System.err.println(file);
+				// TODO Ignore documents shorter than 5 words
+				DKMatrix.add(getTopWords(docID, file));
+			}
+
+			for (LinkedList<Word> ll : DKMatrix) {
+				for (Word w : ll) {
+					returnList.add("S: " + w.word + " V: " + w.tfidf);
 				}
-				
-			
+			}
 
 			return returnList;
-		} 
-		
+		}
+
 		return null;
 	}
 
-	
 	/**
 	 * Get hashmap containing word/tfidf pairs for a given document.
+	 * 
 	 * @param docID
 	 * @param file
 	 * @return Hashmap containing word/tfidf pairs - null if error
 	 */
-	private HashMap<String, Double> extractTfIdfFromDoc(int docID, String file){
+	private LinkedList<Word> getTopWords(int docID, String file) {
 		HashMap<String, Double> hm = null;
-		
-		try{
-		FileReader reader = new FileReader(new File(file));
-		SimpleTokenizer tok = new SimpleTokenizer(reader);
-		int offset = 0;
-		
-		//Hashmap containing word/score pairs
-		hm = new HashMap<String, Double>();
-		
-		
-		while (tok.hasMoreTokens()) {
-			String str = tok.nextToken();
-			hm.put(str, new Double(tfIdf(str, docID)));
-			offset++;
-		}
-		reader.close();
-		}catch (Exception e) {
+
+		try {
+			System.err.println(file);
+			FileReader reader = new FileReader(new File(file));
+			SimpleTokenizer tok = new SimpleTokenizer(reader);
+			int offset = 0;
+
+			// Hashmap containing word/score pairs
+			hm = new HashMap<String, Double>();
+
+			while (tok.hasMoreTokens()) {
+				String str = tok.nextToken();
+				hm.put(str, new Double(tfIdf(str, docID)));
+				offset++;
+			}
+			reader.close();
+		} catch (Exception e) {
 			// TODO: handle exception
 		}
-			
-		return hm;
+
+		LinkedList<Word> ll = new LinkedList<Word>();
+		for (String key : hm.keySet()) {
+			ll.add(new Word(key, hm.get(key)));
+		}
+
+		Collections.sort(ll);
+
+		LinkedList<Word> returnlist = new LinkedList<HashedIndex.Word>();
+
+		for (int i = 0; i < K; i++) {
+			returnlist.addLast(ll.pop());
+		}
+
+		return returnlist;
 	}
 
 	private class Word implements Comparable<Word> {
@@ -169,8 +180,8 @@ public class HashedIndex implements Index {
 				: p1.getDocIdList(docID).wordPos.size();
 		// Number of occurence of the term in document (based on docID)
 		double wf = (1 + Math.log10(tf)); // Weighted tf
-		System.out.println("tf: " + tf);
-		System.out.println("idf: " + idf);
+//		System.out.println("tf: " + tf);
+//		System.out.println("idf: " + idf);
 		return wf * idf;
 
 	}
@@ -332,9 +343,6 @@ public class HashedIndex implements Index {
 		}
 		return score;
 	}
-
-	
-	
 
 	private PostingsList intersection(PostingsList p1, PostingsList p2) {
 
