@@ -111,15 +111,21 @@ public class HashedIndex implements Index {
 	}
 	
 	public LinkedList<Word> intersectionRank(LinkedList<LinkedList<Word>> DKMatrix, String query) {
-		boolean onlyIntersection = true; // otherwise, multiply by tfidf
+		boolean onlyIntersection = false; // otherwise, multiply by tfidf
 		HashMap<String,Double> wordScores = new HashMap<String,Double>();
 		
 		for (LinkedList<Word> ll : DKMatrix) {
 			for (Word w : ll) {
-				if(onlyIntersection){
+				if(onlyIntersection && getPostings(query)!=null && getPostings(w.toString())!=null){
 					wordScores.put(w.toString(), (double)intersection(getPostings(query),getPostings(w.toString())).size());
-				} else {
+				} else if(getPostings(query)!=null && getPostings(w.toString())!=null){
 					wordScores.put(w.toString(), w.tfidf*intersection(getPostings(query),getPostings(w.toString())).size());
+				} else if(getPostings(query)==null&&getPostings(w.toString())==null) {
+					System.err.println("Postingslist for "+ query+" and "+w.toString()+" is null");
+				} else if(getPostings(query)==null){
+					System.err.println("Postingslist for "+ query+" is null");
+				} else {
+					System.err.println("Postingslist for "+ w.toString()+" is null");
 				}
 			}
 		}
@@ -240,6 +246,11 @@ public class HashedIndex implements Index {
 
 		public int compareTo(Word o) {
 			return Double.compare(o.tfidf, tfidf);
+		}
+		
+		@Override
+		public String toString() {
+			return word;
 		}
 	}
 
