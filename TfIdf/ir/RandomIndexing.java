@@ -36,11 +36,11 @@ public class RandomIndexing {
 			String tok = tokens.get(i);			
 
 			if( index.get(tok) == null){
-				WordVector a = new WordVector (rnd);
-				WordVector b = new WordVector (); 
+				WordVector a = new WordVector(rnd);
+				WordVector b = new WordVector(); 
 				int idx = wordVectors.size();
 				wordVectors.add(a);
-				contextVectors.add(b);
+				contextVectors.add(b);				
 				index.put(tok,idx);
 			}		
 		}
@@ -141,37 +141,30 @@ public class RandomIndexing {
 		RandomIndexing ri = new RandomIndexing();				
 		//ri.readData("../50/");
 		ri.readData("../files/1000/");
-		//ri.readData("../files/2000/");
-		//ri.readData("../files/3000/");
+		ri.readData("../files/2000/");
+		ri.readData("../files/3000/");
 		//ri.readData("../files/4000/");
 		//ri.readData("../files/5000/");
-		String term = "anarkism";
+		String term = "varmt";
 		System.out.println("Finding synonyms for: " + term);
+		
+		
 		LinkedList<Word> ll = ri.getSynonyms(term);
 
 		if(ll == null){
 			System.out.println("Word not found in any context.");
+			return;
 		}
 		Collections.sort(ll);
 		//System.out.println( "size " + ri.contextVectors.size() );
 		//System.out.println( ri.contextVectors.get( ri.ndex.get(term)));
 
-		for(int i =20; i< 40; ++i){
-			Word a = ll.pop();
+		for(int i =0; i< 20; ++i){
+			Word a = ll.pollLast();
 			System.out.println(a);
 		//	System.out.println(ri.contextVectors.get( ri.index.get(a.word)));
 
 		}
-		/*
-		int j = 0;
-		
-		for(WordVector v : ri.contextVectors){
-			j++;
-			System.out.println(v);
-			if(j>10)break;
-		}
-		*/
-
 	}
 
 	private class Word implements Comparable<Word> {

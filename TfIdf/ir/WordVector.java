@@ -2,18 +2,18 @@ import java.util.*;
 
 
 public class WordVector{
-	public int [] v;
+	public short [] v;
 	private final int NUM_ONES = 8; // Must be 2-tupel
 	private final int K = 1000;	
 
-	private ArrayList<Integer> generateUniquePos(Random rnd){
-		ArrayList<Integer> out = new ArrayList<Integer>(K);
+	private ArrayList<Short> generateUniquePos(Random rnd){
+		ArrayList<Short> out = new ArrayList<Short>(K);
 		for(int i =0; i< NUM_ONES; ++i){
 			int r = rnd.nextInt(K);
 			while( out.contains(r)){				
 				r = rnd.nextInt(K);				
 			}			
-			out.add(r);
+			out.add((short)r);
 		}
 		return out;
 	}
@@ -29,7 +29,7 @@ public class WordVector{
 	private WordVector addToNew(WordVector b){		
 		WordVector out = new WordVector();
 		for(int i =0; i< b.size(); ++i){
-			out.v[i] = this.v[i] + b.v[i];
+			out.v[i] = (short) (this.v[i] + b.v[i]);
 		}
 		return out;
 	}
@@ -54,14 +54,14 @@ public class WordVector{
 
 	private double getScalarProduct(WordVector b){
 		double sum =0.0;
-		for(int i =0; i< size(); ++i){
+		for(int i =0; i < size(); ++i)
 			sum += v[i]*b.v[i];
-		}
+		
 		return sum;
 	}
 
 	private void init(){
-		v = new int[K];
+		v = new short[K];
 		for(int i =0; i< K; ++i){
 			v[i] = 0;
 		}
@@ -73,9 +73,9 @@ public class WordVector{
 
 	public WordVector(Random rnd){
 		init();
-		ArrayList<Integer> pos = generateUniquePos(rnd);
+		ArrayList<Short> pos = generateUniquePos(rnd);
 		for(int i =0; i< pos.size(); ++i){
-			v[pos.get(i)] = (i>NUM_ONES/2)?-1:1;
+			v[pos.get(i)] = (i>NUM_ONES/2)?(short)-1:(short)1;
 		}
 	}
 
