@@ -27,8 +27,8 @@ public class HashedIndex implements Index {
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
 
-	private final int D = 50; // number of top ranking documents to retrieve
-	private final int K = 20; // number of top ranking words to retrieve
+	private final int D = 2; // number of top ranking documents to retrieve
+	private final int K = 3; // number of top ranking words to retrieve
 
 	// private static String PAGERANKFILE = "ir/tmp";
 	// private static String PAGERANKFILE = "/var/tmp/MC3";
@@ -75,7 +75,7 @@ public class HashedIndex implements Index {
 		if (queryType == Index.RANKED_QUERY) {
 			PostingsList pll = rankedSearch(searchTerms);
 			for (PostingsEntry pl : pll.getList()) {
-				System.out.println("result: " + docIDs.get("" + pl.docID));
+				System.out.println("result: " + docIDs.get("" + pl.docID)+" docID: "+pl.docID);
 			}
 
 			LinkedList<LinkedList<Word>> DKMatrix = new LinkedList<LinkedList<Word>>();
@@ -202,6 +202,7 @@ public class HashedIndex implements Index {
 		try {
 			System.err.println(file);
 			FileReader reader = new FileReader(new File(file));
+			System.err.println(reader.toString());
 			SimpleTokenizer tok = new SimpleTokenizer(reader);
 			int offset = 0;
 
@@ -210,12 +211,14 @@ public class HashedIndex implements Index {
 
 			while (tok.hasMoreTokens()) {
 				String str = tok.nextToken();
+				
 				hm.put(str, new Double(tfIdf(str, docID)));
 				offset++;
 			}
 			reader.close();
 		} catch (Exception e) {
 			// TODO: handle exception
+			System.err.println(e.toString());
 		}
 
 		LinkedList<Word> ll = new LinkedList<Word>();

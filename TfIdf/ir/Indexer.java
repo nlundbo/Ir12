@@ -148,8 +148,6 @@ public class Indexer {
 			}
 			in.close();
 
-
-
 		} catch (Exception e) {
 			System.err.println("Error: " + e.getMessage());
 
