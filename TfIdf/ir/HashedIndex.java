@@ -28,8 +28,9 @@ public class HashedIndex implements Index {
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
 
-	private final int D = 2; // number of top ranking documents to retrieve
-	private final int K = 3; // number of top ranking words to retrieve
+	private final int D = 20; // number of top ranking documents to retrieve
+	private final int K = 30; // number of top ranking words to retrieve
+	private int returnCount=5; // number of returned word to GUI
 
 
 	/**
@@ -92,15 +93,17 @@ public class HashedIndex implements Index {
 			}
 			LinkedList<Word> ll = new LinkedList<Word>();
 			if(!meidi) {
-				ll = wordSumOfPos(DKMatrix, 5);
+				ll = wordSumOfPos(DKMatrix);
 			} else {
 				ll = intersectionRank(DKMatrix, searchTerms.getFirst());
 			}
+			int i = 0;
 			for (Word w : ll) {
+				if(i>returnCount)break;
 				returnList.add("S: " + w.word + " V: " + w.tfidf);
+				i++;
 			}
-
-
+			
 			return returnList;
 		}
 
@@ -152,7 +155,7 @@ public class HashedIndex implements Index {
 	 * Get the <i>n</i> most 
 	 * @return
 	 */
-	public LinkedList<Word> wordSumOfPos(LinkedList<LinkedList<Word>> DKMatrix, int n)
+	public LinkedList<Word> wordSumOfPos(LinkedList<LinkedList<Word>> DKMatrix)
 	{
 		HashMap<String,Double> scoreBoard = new HashMap<String, Double>();
 
@@ -179,13 +182,8 @@ public class HashedIndex implements Index {
 			rankedList.add(new Word(key,scoreBoard.get(key)));
 		}
 		Collections.sort(rankedList);
-		LinkedList<Word> returnList = new LinkedList<Word>();
-
-		for(int i = 0 ; i < n ; i++)
-		{
-			returnList.addLast(rankedList.get(i));
-		}
-		return returnList;
+		return rankedList;
+			
 	}
 	/**
 	 * Get hashmap containing word/tfidf pairs for a given document.
@@ -200,23 +198,21 @@ public class HashedIndex implements Index {
 		try {
 			System.err.println(file);
 			FileReader reader = new FileReader(new File(file));
-			System.err.println(reader.toString());
 			SimpleTokenizer tok = new SimpleTokenizer(reader);
-			int offset = 0;
 
 			// Hashmap containing word/score pairs
 			hm = new HashMap<String, Double>();
 
 			while (tok.hasMoreTokens()) {
 				String str = tok.nextToken();
-				
-				hm.put(str, new Double(tfIdf(str, docID)));
-				offset++;
+				if(!Indexer.stopWord.contains(str)){
+					hm.put(str, new Double(tfIdf(str, docID)));
+				}
 			}
 			reader.close();
 		} catch (Exception e) {
 			// TODO: handle exception
-			System.err.println(e.toString());
+			System.err.println("Fel här: "+e.toString());
 		}
 
 		LinkedList<Word> ll = new LinkedList<Word>();
@@ -228,7 +224,7 @@ public class HashedIndex implements Index {
 
 		LinkedList<Word> returnlist = new LinkedList<Word>();
 
-		for (int i = 0; i < K; i++) {
+		for (int i = 0; i < Math.min(K, ll.size()-1); i++) {
 			returnlist.addLast(ll.pop());
 		}
 

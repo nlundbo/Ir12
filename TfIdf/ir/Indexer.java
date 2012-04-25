@@ -29,7 +29,7 @@ public class Indexer {
 
 	/** The index to be built up by this indexer. */
 	public Index index;
-	HashSet<String> stopWord = new HashSet<String>();
+	public static HashSet<String> stopWord = new HashSet<String>();
 
 	/** The next docID to be generated. */
 	private int lastDocID = 0;

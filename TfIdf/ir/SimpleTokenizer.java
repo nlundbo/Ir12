@@ -161,7 +161,6 @@ public class SimpleTokenizer {
 		while ( buf[ptr] != 0 ) {
 			if ( tokenStart < 0 ) {
 				if ( !normalize( buf, ptr )) {
-					/*
 					if(buf[ptr] =='='&&ptr<BUFFER_LENGTH-10){
 						char[] test = {'=',' ','S','e',' ','Ã','¤','v','e','n'};
 						boolean niklas=true;
@@ -172,7 +171,7 @@ public class SimpleTokenizer {
 							}
 						}
 						if(niklas) return null;
-					}*/
+					}
 					
 					ptr++;
 				}

@@ -39,7 +39,7 @@ public class SearchGUI extends JFrame {
 	LinkedList<String> indexFiles = new LinkedList<String>();
 
 	/** Maximum number of indices we can read from disk. */
-	public static final int MAX_NUMBER_OF_INDEX_FILES = 20;
+	public static final int MAX_NUMBER_OF_INDEX_FILES = 10;
 
 	/**  The query type (either intersection, phrase, or ranked). */
 	int queryType = Index.RANKED_QUERY;
