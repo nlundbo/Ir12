@@ -1,3 +1,4 @@
+package ir;
 import java.util.*;
 import java.io.*;
 import ir.SimpleTokenizer;
