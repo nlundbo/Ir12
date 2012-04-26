@@ -33,8 +33,8 @@ public class MegaIndex implements Index {
 	// The directory where to place index files on disk.
 	private static final String path = "./index";
 
-	private final int D = 1; // number of top ranking documents to retrieve
-	private final int K = 5; // number of top ranking words to retrieve
+	private final int D = 20; // number of top ranking documents to retrieve
+	private final int K = 50; // number of top ranking words to retrieve
 	private final int NOR = 5; //Number of results to return to GUI
 	
 	/**

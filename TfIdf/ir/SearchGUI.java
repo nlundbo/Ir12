@@ -31,7 +31,7 @@ public class SearchGUI extends JFrame {
 
 	/**  The indexer creating the search index. */
 	Indexer indexer;
-
+	RandomIndexing ri = new RandomIndexing();
 	/**  Directories that should be indexed. */
 	LinkedList<String> dirNames = new LinkedList<String>();
 
@@ -71,7 +71,7 @@ public class SearchGUI extends JFrame {
 	JMenu optionsMenu = new JMenu( "Search options" );
 	JMenuItem saveItem = new JMenuItem( "Save index and exit" );
 	JMenuItem quitItem = new JMenuItem( "Quit" );
-	JRadioButtonMenuItem assumationItem = new JRadioButtonMenuItem( "Assumation extraction" );
+	JRadioButtonMenuItem summationItem = new JRadioButtonMenuItem( "Summation extraction" );
 	JRadioButtonMenuItem intersectItem = new JRadioButtonMenuItem( "Intersect extraction" );
 	JRadioButtonMenuItem randomItem = new JRadioButtonMenuItem( "Randomindex extraction" );
 	ButtonGroup queries = new ButtonGroup();
@@ -95,13 +95,13 @@ public class SearchGUI extends JFrame {
 		menuBar.add( optionsMenu );
 		fileMenu.add( saveItem );
 		fileMenu.add( quitItem );
-		optionsMenu.add( assumationItem );
+		optionsMenu.add( summationItem );
 		optionsMenu.add( intersectItem );
 		optionsMenu.add( randomItem );
-		queries.add( assumationItem );
+		queries.add( summationItem );
 		queries.add( intersectItem );
 		queries.add( randomItem );
-		assumationItem.setSelected( true );
+		summationItem.setSelected( true );
 		p.add( menuBar );
 		// Logo
 		JPanel p1 = new JPanel();
@@ -145,7 +145,11 @@ public class SearchGUI extends JFrame {
 				// (this might corrupt the index).
 				LinkedList<String> result;
 				synchronized ( indexLock ) {
+					if(queryType==2){
+						result = ri.getSynonyms(searchterms.pop());//TODO tar bara ett ord
+					}else{
 					result = indexer.index.search( searchterms, queryType );
+					}
 				}
 				StringBuffer allWords = new StringBuffer();
 				StringBuffer orQuery = new StringBuffer();
@@ -199,14 +203,31 @@ public class SearchGUI extends JFrame {
 
 
 
-
+		Action setRandomQuery = new AbstractAction() {
+			@Override
+			public void actionPerformed( ActionEvent e ) {
+			    queryType = 2;
+			}
+		    };
+		randomItem.addActionListener( setRandomQuery );
+		
+		Action setIntersectQuery = new AbstractAction() {
+			@Override
+			public void actionPerformed( ActionEvent e ) {
+			    queryType = 2;
+			}
+		    };
+		intersectItem.addActionListener( setIntersectQuery );
+		
+		
+		
 
 		Action setRankedQuery = new AbstractAction() {
 			public void actionPerformed( ActionEvent e ) {
 				queryType = Index.RANKED_QUERY;
 			}
 		};
-		assumationItem.addActionListener( setRankedQuery );
+		summationItem.addActionListener( setRankedQuery );
 
 	}
 
@@ -260,6 +281,11 @@ public class SearchGUI extends JFrame {
 			else if ( "-m".equals( args[i] )) {
 				i++;
 				indexType = Index.MEGA_INDEX;
+			}
+			else if ( "-r".equals( args[i] )) {
+				i++;
+				resultWindow.setText( "\n  Making randomindex, please wait..." );
+				ri.readData(dirNames.peek());
 			}
 			else {
 				System.err.println( "Unknown option: " + args[i] );
