@@ -1,21 +1,37 @@
 package ir;
 
+/**
+ * Simple class to keep a word with a corresponding score. 
+ * The class overrides the compareTo method in order to compare two
+ * words based on score.
+ * 
+ * @author Niklas Lundborg 
+ * @version 2012-04-20
+ *
+ */
 public class Word implements Comparable<Word> {
-	public String word;
-	public Double tfidf;
+	public String word; 
+	public Double score; 
 
+	/**
+	 * Default Constructor
+	 */
 	public Word() {
 		word = "";
-		tfidf = new Double(0.0);
+		score = new Double(0.0);
 	}
-
-	public Word(String str, Double tfidf) {
+	
+	/**
+	 * @param str
+	 * @param score
+	 */
+	public Word(String str, Double score) {
 		word = str;
-		this.tfidf = tfidf;
+		this.score = score;
 	}
 
 	public int compareTo(Word o) {
-		return Double.compare(o.tfidf, tfidf);
+		return Double.compare(o.score, score);
 	}
 
 	@Override
