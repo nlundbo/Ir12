@@ -33,8 +33,8 @@ public class MegaIndex implements Index {
 	// The directory where to place index files on disk.
 	private static final String path = "./index";
 
-	private final int D = 1; // number of top ranking documents to retrieve
-	private final int K = 5; // number of top ranking words to retrieve
+	private final int D = 40; // number of top ranking documents to retrieve
+	private final int K = 30; // number of top ranking words to retrieve
 	private final int NOR = 5; //Number of results to return to GUI
 	
 	/**
@@ -283,6 +283,13 @@ public class MegaIndex implements Index {
 
 		
 			PostingsList pll = rankedSearch(searchTerms);// evalRankQuery(searchTerms);
+			if(pll == null)
+			{
+				LinkedList<String> ans =  new LinkedList<String>();
+				ans.add("Word not in index");
+				
+				return ans;
+			}
 
 			for (PostingsEntry pl : pll.getPostings()) {
 				System.out.println("result: " + docIDs.get("" + pl.docID));
