@@ -1,13 +1,8 @@
-/*  
- *   This file is part of the computer assignment for the
- *   Information Retrieval course at KTH.
- * 
- *   First version:  Johan Boye, 2010
- *   Second version: Johan Boye, 2012
- */
-
 package ir;
 
+import java.util.LinkedList;
+
+import com.larvalabs.megamap.MegaMapException;
 import com.larvalabs.megamap.MegaMapManager;
 import com.larvalabs.megamap.MegaMap;
 
@@ -15,32 +10,33 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Set;
 
+/**
+ * <b> Class MegaIndex</b> The basis for this class was implemented by Johan
+ * Boye 2012 for course DD2476 information retrieval at KTH. The class uses
+ * megamap to store large indices to file.
+ * @author Niklas Lundborg, Mattias Knutsson, Sebastian Remnerud, Meidi Tönisson
+ */
 public class MegaIndex implements Index {
+	private static final boolean DEBUG = false; // Set to true for Debug prints
 
-	/**
-	 * The index as a hash map that can also extend to secondary memory if
-	 * necessary.
-	 */
+	// The index as a hashmap that can also extend to secondary memory if
+	// necessary.
 	private MegaMap index;
 
-	/**
-	 * The MegaMapManager is the user's entry point for creating and saving
-	 * MegaMaps on disk.
-	 */
+	// The MegaMapManager is the user's entry point for creating and saving
+	// MegaMaps on disk.
 	private MegaMapManager manager;
 
-	/** The directory where to place index files on disk. */
+	// The directory where to place index files on disk.
 	private static final String path = "./index";
 
-	private static boolean DEBUG = false;
-
-	private final int D = 50; // number of top ranking documents to retrieve
-	private final int K = 20; // number of top ranking words to retrieve
-
+	private final int D = 1; // number of top ranking documents to retrieve
+	private final int K = 5; // number of top ranking words to retrieve
+	private final int NOR = 5; //Number of results to return to GUI
+	
 	/**
 	 * Create a new index and invent a name for it.
 	 */
@@ -55,25 +51,36 @@ public class MegaIndex implements Index {
 	}
 
 	/**
-	 * Create a MegaIndex, possibly from a list of smaller indexes.
+	 * Create a MegaIndex from a list of smaller indexes.
 	 */
 	public MegaIndex(LinkedList<String> indexfiles) {
 		try {
 			manager = MegaMapManager.getMegaMapManager();
+
+			// If the list is empty create new index
 			if (indexfiles.size() == 0) {
-				// No index file names specified. Construct a new index and
-				// invent a name for it.
 				index = manager.createMegaMap(generateFilename(), path, true,
 						false);
 
+				// If there is only one index file read in the index
 			} else if (indexfiles.size() == 1) {
-				// Read the specified index from file
+
+				// Read index from file
 				index = manager.createMegaMap(indexfiles.get(0), path, true,
 						false);
+
+				// Retrieve DocLengths
+				HashMap<String, Integer> dl = (HashMap<String,Integer>) index.get("..docLengths");
+				if (dl == null) {
+					System.err
+							.println("Couldn't retrieve docLengths");
+				} else {
+					docLengths.putAll(dl);
+				}
+				
+				// Retrieve docIDs
 				HashMap<String, String> m = (HashMap<String, String>) index
 						.get("..docIDs");
-				HashMap<String, Integer> dl = (HashMap<String, Integer>) index
-						.get("..docLengths");
 
 				if (m == null) {
 					System.err
@@ -81,21 +88,29 @@ public class MegaIndex implements Index {
 				} else {
 					docIDs.putAll(m);
 				}
-				if (dl == null) {
-					System.err.println("Couldn't retrieve docLengths");
-				} else {
-					docLengths.putAll(dl);
-				}
+
+				// If there is more than one index file we have merge the
+				// indices
 			} else {
-				// Merge the specified index files into a large index.
+
+				// Read in all the indices
 				MegaMap[] indexesToBeMerged = new MegaMap[indexfiles.size()];
 				for (int k = 0; k < indexfiles.size(); k++) {
 					System.err.println(indexfiles.get(k));
 					indexesToBeMerged[k] = manager.createMegaMap(
 							indexfiles.get(k), path, true, false);
 				}
+
+				// Merge the specified index files into a large index
 				index = merge(indexesToBeMerged);
 				for (int k = 0; k < indexfiles.size(); k++) {
+
+					// Retrieve docLengths
+					docLengths.putAll((HashMap<String, Integer>) indexesToBeMerged[k]
+							.get("..docLengths"));
+					// Inserted to get filenames instead of docIDs
+					docIDs.putAll((HashMap<String, String>) indexesToBeMerged[k]
+							.get("..docIDs"));
 					manager.removeMegaMap(indexfiles.get(k));
 				}
 			}
@@ -107,65 +122,34 @@ public class MegaIndex implements Index {
 	/**
 	 * Generates unique names for index files
 	 */
-	String generateFilename() {
+	private String generateFilename() {
 		String s = "index_" + Math.abs((new java.util.Date()).hashCode());
 		System.err.println(s);
 		return s;
 	}
 
 	/**
-	 * It is ABSOLUTELY ESSENTIAL to run this method before terminating the JVM,
-	 * otherwise the index files might become corrupted.
-	 */
-	public void cleanup() {
-		// Save the docID-filename association list in the MegaMap as well
-		index.put("..docIDs", docIDs);
-		index.put("..docLengths", docLengths);
-		// Shutdown the MegaMap thread gracefully
-		manager.shutdown();
-	}
-
-	/**
-	 * Returns the dictionary (the set of terms in the index) as a HashSet.
-	 */
-	@SuppressWarnings("rawtypes")
-	public Set getDictionary() {
-		return index.getKeys();
-	}
-
-	/**
-	 * Merges several indexes into one.
+	 * Merge several indices together.
+	 * 
+	 * @param indexes
+	 *            to be merged as MegaMaps
+	 * @return MegaMap containing the merged index
 	 */
 	MegaMap merge(MegaMap[] indexes) {
 		try {
-			MegaMap res = manager.createMegaMap(generateFilename(), path, true,
-					false);
 
-			for (int i = 0; i < indexes.length; ++i) {
-				HashMap<String, String> m = (HashMap<String, String>) indexes[i]
-						.get("..docIDs");
-				if (m == null) {
-					System.err
-							.println("Couldn't retrieve the associations between docIDs and document names");
-				} else {
-					docIDs.putAll(m);
-				}
+			MegaMap mergedIndex = manager.createMegaMap(generateFilename(),
+					path, true, false);
 
-				Set<String> words = (Set<String>) indexes[i].getKeys();
-				for (String s : words) {
-					if (res.hasKey(s)) {
-						PostingsList pl0 = getPostings(res, s);
-						PostingsList pli = getPostings(indexes[i], s);
-						pl0.mergeList(pli);
-						res.put(s, pl0);
-					} else {
-						res.put(s, getPostings(indexes[i], s));
-					}
-				}
+			// Copy the first index to mergedIndex
+			copyIndex(indexes[0], mergedIndex);
 
+			// Merge remaining indexes with res
+			for (int i = 1; i < indexes.length; i++) {
+				merge(mergedIndex, indexes[i]);
 			}
 
-			return res;
+			return mergedIndex;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
@@ -173,19 +157,90 @@ public class MegaIndex implements Index {
 	}
 
 	/**
-	 * Inserts this token in the hashtable.
+	 * Copy all the postingsList from one MegaMap to another.
+	 * 
+	 * @param MegaMap
+	 *            from
+	 * @param MegaMap
+	 *            to - has to be initalized.
 	 */
-	public void insert(String token, int docID, int offset) {
-		int score = 0; // todo
-		PostingsList pl;
-		if (index.hasKey(token)) {
-			pl = getPostings(token);
-		} else {
-			pl = new PostingsList();
-			index.put(token, pl);
-		}
+	void copyIndex(MegaMap from, MegaMap to) {
+		for (Object oKey : from.getKeys()) // object key
+		{
+			String key = (String) oKey;
 
-		pl.addPostingsEntry(docID, score, offset);
+			if (key.equals("..docIDs") || key.equals("..docLengths")) {
+				continue;
+			}
+			try {
+				to.put(key, (PostingsList) (from.get(key)));
+			} catch (MegaMapException e) {
+				e.printStackTrace();
+			}
+
+		}
+	}
+
+	/**
+	 * Merge index2 into index1 including
+	 * 
+	 * @param index1
+	 * @param index2
+	 * @throws MegaMapException
+	 */
+	@SuppressWarnings("unchecked")
+	void merge(MegaMap index1, MegaMap index2) {
+		try {
+
+			// Iterate over index2
+			for (Object oKey : index2.getKeys()) {
+				String key = (String) oKey; // Convert key to String
+
+				// Handle special element (docID -filename mapping and
+				// docLengths)
+				if (key.equals("..docIDs") || key.equals("..docLengths")) {
+					continue;
+				}
+
+				// If term already exists in index1
+				if (index1.hasKey(key)) {
+					PostingsList pl1 = (PostingsList) index1.get(key);
+					PostingsList pl2 = (PostingsList) index2.get(key);
+
+					int i1 = 0; // index for pl1
+					int i2 = 0; // index for pl2
+
+					while (i2 < pl2.size()) {
+						while (i1 < pl1.size() && i2 < pl2.size()) {
+							int docID1 = pl1.get(i1).docID;
+							int docID2 = pl2.get(i2).docID;
+
+							if (docID1 == docID2) {
+								i1++;
+								i2++;
+							} else if (docID1 > docID2) {
+								pl1.add(pl2.get(i2), i1);
+								i2++;
+								i1++;
+							} else if (docID1 < docID2) {
+								i1++;
+							}
+						}
+						if (i2 < pl2.size())
+							pl1.addLast(pl2.get(i2));
+						i2++;
+					}
+
+				} else {
+					index1.put(key, (PostingsList) index2.get(key));
+				}
+
+			}
+
+		} catch (MegaMapException e) {
+			System.err.println("Could not cast to HashMap");
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -200,33 +255,41 @@ public class MegaIndex implements Index {
 		}
 	}
 
-	public static PostingsList getPostings(MegaMap index, String token) {
-		try {
-			return (PostingsList) index.get(token);
-		} catch (Exception e) {
-			return new PostingsList();
+	/**
+	 * Inserts this token in the hashtable.
+	 */
+	public void insert(String token, int docID, int offset) {
+		int score = 0;
+		PostingsList pl;
+		if (index.hasKey(token)) {
+			pl = getPostings(token);
+		} else {
+			pl = new PostingsList();
+			index.put(token, pl);
 		}
+
+		pl.addPostingsEntry(docID, score, offset);
 	}
 
-	/**
-	 * Searches the index for postings matching the query in @code{searchterms}.
-	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
+		boolean iRank = false; //Intersectionrank
 
-		boolean meidi = false;
 		LinkedList<String> returnList = new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
-			PostingsList pll = rankedSearch(searchTerms);
-			for (PostingsEntry pl : pll.getList()) {
+
+			// TODO should we do this for every search term?
+			PostingsList pll = rankedSearch(searchTerms);// evalRankQuery(searchTerms);
+
+			for (PostingsEntry pl : pll.getPostings()) {
 				System.out.println("result: " + docIDs.get("" + pl.docID));
 			}
 
 			LinkedList<LinkedList<Word>> DKMatrix = new LinkedList<LinkedList<Word>>();
 
 			// TODO Get List docIDs from resulting postings list
-			for (int i = 0; i < D && i < pll.getList().size(); i++) {
-				PostingsEntry pl = pll.getList().get(i);
+			for (int i = 0; i < D && i < pll.getPostings().size(); i++) {
+				PostingsEntry pl = pll.getPostings().get(i);
 				int docID = pl.docID;
 				String file = docIDs.get("" + docID);
 
@@ -237,21 +300,118 @@ public class MegaIndex implements Index {
 				DKMatrix.add(getTopWords(docID, file));
 			}
 			LinkedList<Word> ll = new LinkedList<Word>();
-			if (!meidi) {
-				ll = wordSumOfPos(DKMatrix, 5);
+			if (!iRank) {
+				ll = summationRank(DKMatrix);
 			} else {
 				ll = intersectionRank(DKMatrix, searchTerms.getFirst());
 			}
+			int i = 0;
 			for (Word w : ll) {
-				returnList.add("S: " + w.word + " V: " + w.tfidf);
+				if(i > NOR){break;}
+				returnList.add("S: " + w.word + " V: " + w.score);
+				i++;
 			}
 
 			return returnList;
 		}
 
 		return null;
+
 	}
 
+	/**
+	 * Get hashmap containing word/tfidf pairs for a given document.
+	 * 
+	 * @param docID
+	 * @param file
+	 * @return Hashmap containing word/tfidf pairs - null if error
+	 */
+	private LinkedList<Word> getTopWords(int docID, String file) {
+		HashMap<String, Double> hm = null;
+
+		try {
+			System.err.println(file);
+			FileReader reader = new FileReader(new File(file));
+			SimpleTokenizer tok = new SimpleTokenizer(reader);
+
+			// Hashmap containing word/score pairs
+			hm = new HashMap<String, Double>();
+
+			while (tok.hasMoreTokens()) {
+				String str = tok.nextToken();
+				if(!Indexer.stopWord.contains(str)){
+				hm.put(str, new Double(tfIdf(str, docID)));
+				}
+			}
+			
+			reader.close();
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+
+		LinkedList<Word> ll = new LinkedList<Word>();
+		for (String key : hm.keySet()) {
+			ll.add(new Word(key, hm.get(key)));
+		}
+
+		Collections.sort(ll);
+
+		LinkedList<Word> returnlist = new LinkedList<Word>();
+
+		for (int i = 0; i < Math.min(K, ll.size()); i++) {
+			returnlist.addLast(ll.pop());
+		}
+
+		return returnlist;
+	}
+
+	/**
+	 * Take a doc/word matrix and rank them according to the sum of ranking
+	 * positions. Example. The matrix consists of <i>k</i> columns and the
+	 * <i>r</i> rows. The word W occurs in columns 1, 5 and 4 in different rows.
+	 * most
+	 * 
+	 * @return
+	 */
+	public LinkedList<Word> summationRank(
+			LinkedList<LinkedList<Word>> DKMatrix) {
+		HashMap<String, Double> scoreBoard = new HashMap<String, Double>();
+
+		for (LinkedList<Word> lw : DKMatrix) {
+			int i = lw.size();
+			for (Word w : lw) {
+				if (scoreBoard.containsKey(w.word)) {
+					scoreBoard.put(w.word, scoreBoard.get(w.word) + i);
+				} else {
+					scoreBoard.put(w.word, new Double(i));
+				}
+				i--;
+			}
+		}
+
+		LinkedList<Word> rankedList = new LinkedList<Word>();
+
+		for (String key : scoreBoard.keySet()) {
+			rankedList.add(new Word(key, scoreBoard.get(key)));
+		}
+		
+		Collections.sort(rankedList);
+		
+		return rankedList;
+	}
+
+	/**
+	 * The intersectionrank takes a matrix consisting of the K topranked words
+	 * from the D topranked documents. From this matrix all unique words are
+	 * retrieved. For each unique word an intersection is made between the word
+	 * and the query word. The co-occurence score is calculated as the number
+	 * documents retrieved from that intersection.
+	 * 
+	 * @param DKMatrix
+	 *            - Doc/Word matrix
+	 * @param query
+	 * @return LinkedList of Words containing a co-occurence score.
+	 */
 	public LinkedList<Word> intersectionRank(
 			LinkedList<LinkedList<Word>> DKMatrix, String query) {
 		boolean onlyIntersection = false; // otherwise, multiply by tfidf
@@ -275,13 +435,13 @@ public class MegaIndex implements Index {
 						&& getPostings(w.toString()) != null) {
 					wordScores.put(
 							w.toString(),
-							w.tfidf
+							w.score
 									+ intersection(getPostings(query),
 											getPostings(w.toString())).size());
 					System.out.println("Score for "
 							+ w.toString()
 							+ " is "
-							+ w.tfidf
+							+ w.score
 							+ intersection(getPostings(query),
 									getPostings(w.toString())).size()
 							+ ": "
@@ -311,119 +471,25 @@ public class MegaIndex implements Index {
 		Collections.sort(wordList);
 		if (wordList.getFirst() != null) {
 			System.out.println("The best hit is " + wordList.getFirst()
-					+ " with score " + wordList.getFirst().tfidf);
+					+ " with score " + wordList.getFirst().score);
 		}
 		return wordList;
-	}
-
-	/**
-	 * Take a doc/word matrix and rank them according to the sum of ranking
-	 * positions. Example. The matrix consists of <i>k</i> columns and the
-	 * <i>r</i> rows. The word W occurs in columns 1, 5 and 4 in different rows.
-	 * most
-	 * 
-	 * @return
-	 */
-	public LinkedList<Word> wordSumOfPos(LinkedList<LinkedList<Word>> DKMatrix,
-			int n) {
-		HashMap<String, Double> scoreBoard = new HashMap<String, Double>();
-
-		for (LinkedList<Word> lw : DKMatrix) {
-			int i = lw.size();
-			for (Word w : lw) {
-				if (scoreBoard.containsKey(w.word)) {
-					scoreBoard.put(w.word, scoreBoard.get(w.word) + i);
-				} else {
-					scoreBoard.put(w.word, new Double(i));
-				}
-				i--;
-			}
-		}
-
-		LinkedList<Word> rankedList = new LinkedList<Word>();
-
-		for (String key : scoreBoard.keySet()) {
-			rankedList.add(new Word(key, scoreBoard.get(key)));
-		}
-		Collections.sort(rankedList);
-		LinkedList<Word> returnList = new LinkedList<Word>();
-
-		for (int i = 0; i < n; i++) {
-			returnList.addLast(rankedList.get(i));
-		}
-		return returnList;
-	}
-
-	/**
-	 * Get hashmap containing word/tfidf pairs for a given document.
-	 * 
-	 * @param docID
-	 * @param file
-	 * @return Hashmap containing word/tfidf pairs - null if error
-	 */
-	private LinkedList<Word> getTopWords(int docID, String file) {
-		HashMap<String, Double> hm = null;
-
-		try {
-			System.err.println(file);
-			FileReader reader = new FileReader(new File(file));
-			SimpleTokenizer tok = new SimpleTokenizer(reader);
-			int offset = 0;
-
-			// Hashmap containing word/score pairs
-			hm = new HashMap<String, Double>();
-
-			while (tok.hasMoreTokens()) {
-				String str = tok.nextToken();
-				hm.put(str, new Double(tfIdf(str, docID)));
-				offset++;
-			}
-			reader.close();
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-
-		LinkedList<Word> ll = new LinkedList<Word>();
-		for (String key : hm.keySet()) {
-			ll.add(new Word(key, hm.get(key)));
-		}
-
-		Collections.sort(ll);
-
-		LinkedList<Word> returnlist = new LinkedList<Word>();
-
-		for (int i = 0; i < K; i++) {
-			returnlist.addLast(ll.pop());
-		}
-
-		return returnlist;
-	}
-
-	public double tfIdf(String term, int docID) {
-		PostingsList p1 = getPostings(term); // Documents containing term
-		int NP = docLengths.size(); // Number of documents
-		int df = getPostings(term).size(); // Number of documents where term
-		// occur
-
-		double idf = Math.log10(NP / df); // Inverse term frequency
-		double tf = p1.getDocIdList(docID) == null ? 0
-				: p1.getDocIdList(docID).wordPos.size();
-		// Number of occurence of the term in document (based on docID)
-		double wf = (1 + Math.log10(tf)); // Weighted tf
-
-		return wf * idf;
-
 	}
 
 	private PostingsList rankedSearch(LinkedList<String> searchTerms) {
 		HashMap<String, Integer> terms = new HashMap<String, Integer>();
 		LinkedList<PostingsList> pl = new LinkedList<PostingsList>();
+
 		// Get unique search terms, and count their frequency
+
+		// TODO Calculates TF for query?
 		for (String s : searchTerms) {
 			int tmp = 0;
+
 			if (terms.containsKey(s)) {
 				tmp = terms.get(s);
 			}
+
 			terms.put(s, ++tmp);
 		}
 
@@ -436,16 +502,13 @@ public class MegaIndex implements Index {
 			PostingsList tmp = getPostings(s);
 			pl.add(tmp);
 			if (tmp != null) {
-				for (PostingsEntry pe : tmp.getList()) {
+				for (PostingsEntry pe : tmp.getPostings()) {
 					docIds.add(pe.docID);
 				}
 			}
 		}
 
 		Object[] docIdSet = docIds.toArray();
-		for (Object foo : docIdSet) {
-			System.out.println("DOCIDSET" + foo.toString());
-		}
 
 		double[] qv = new double[terms.size()]; // query vector
 		double[][] dm = new double[docIds.size()][terms.size()]; // document
@@ -462,10 +525,10 @@ public class MegaIndex implements Index {
 				for (int j = 0; j < dm.length; ++j) {
 					// Vi måste ha PE för DOCID och Term
 					int docID = (Integer) docIdSet[j];
-					PostingsEntry pe = currentTerm.getDocIdList(docID);
+					PostingsEntry pe = currentTerm.getEntryByDocID(docID);
 					double tmp_tf = 0;
 					if (pe != null)
-						tmp_tf = (double) pe.wordPos.size();
+						tmp_tf = (double) pe.getTF();
 					if (tmp_tf > 0) {
 						tmp_tf = 1.0 + Math.log10(tmp_tf);
 					}
@@ -522,6 +585,37 @@ public class MegaIndex implements Index {
 		return ret;
 	}
 
+	/**
+	 * Calculate the tf-Idf score for a given term and document
+	 * 
+	 * @param term
+	 * @param docID
+	 * @return
+	 */
+	public double tfIdf(String term, int docID) {
+		PostingsList p1 = getPostings(term); // Documents containing term
+		int NP = docLengths.size(); // Number of documents
+		int df = getPostings(term).size(); // Number of documents where term
+		// occur
+
+		double idf = Math.log10(NP / df); // Inverse term frequency
+		double tf = p1.getEntryByDocID(docID) == null ? 0 : p1
+				.getEntryByDocID(docID).offsets.size();
+		// Number of occurence of the term in document (based on docID)
+		double wf = (1 + Math.log10(tf)); // Weighted tf
+
+		return wf * idf;
+
+	}
+
+	/**
+	 * Will make an intersection between postingsLists p1 and p2 i.e. find all
+	 * entries which have the same docID for both p1 and p2.
+	 * 
+	 * @param p1
+	 * @param p2
+	 * @return
+	 */
 	private PostingsList intersection(PostingsList p1, PostingsList p2) {
 
 		PostingsList ans = new PostingsList();
@@ -545,8 +639,23 @@ public class MegaIndex implements Index {
 	}
 
 	/**
-	 * ##################################### COSINE CALCULATION
-	 * #####################################
+	 * It is essential to run the cleanup before terminating the JVM, otherwise
+	 * the index files might become corrupted.
+	 */
+	public void cleanup() {
+		// Save the docID-filename association list in the MegaMap as well
+		index.put("..docIDs", docIDs);
+		index.put("..docLengths", docLengths);
+		// Shutdown the MegaMap thread gracefully
+		manager.shutdown();
+	}
+
+	/**
+	 * Calculate the cosine score between a query vector and document vector.
+	 * 
+	 * @param qv
+	 * @param dm
+	 * @return
 	 */
 	private double[] cos(double[] qv, double[][] dm) {
 		double qnorm = 0;

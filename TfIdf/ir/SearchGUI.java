@@ -71,7 +71,9 @@ public class SearchGUI extends JFrame {
 	JMenu optionsMenu = new JMenu( "Search options" );
 	JMenuItem saveItem = new JMenuItem( "Save index and exit" );
 	JMenuItem quitItem = new JMenuItem( "Quit" );
-	JRadioButtonMenuItem rankedItem = new JRadioButtonMenuItem( "Ranked retrieval" );
+	JRadioButtonMenuItem assumationItem = new JRadioButtonMenuItem( "Assumation extraction" );
+	JRadioButtonMenuItem intersectItem = new JRadioButtonMenuItem( "Intersect extraction" );
+	JRadioButtonMenuItem randomItem = new JRadioButtonMenuItem( "Randomindex extraction" );
 	ButtonGroup queries = new ButtonGroup();
 
 
@@ -93,16 +95,22 @@ public class SearchGUI extends JFrame {
 		menuBar.add( optionsMenu );
 		fileMenu.add( saveItem );
 		fileMenu.add( quitItem );
-		optionsMenu.add( rankedItem );
-		queries.add( rankedItem );
-		rankedItem.setSelected( true );
+		optionsMenu.add( assumationItem );
+		optionsMenu.add( intersectItem );
+		optionsMenu.add( randomItem );
+		queries.add( assumationItem );
+		queries.add( intersectItem );
+		queries.add( randomItem );
+		assumationItem.setSelected( true );
 		p.add( menuBar );
 		// Logo
 		JPanel p1 = new JPanel();
 		p1.setLayout(new BoxLayout(p1, BoxLayout.X_AXIS));
+		p1.add( new JLabel( new ImageIcon( "ace_of_spades.jpg" )));
+
 		JLabel jl = new JLabel( "Sebastians MOM is so poor she couldn't even pay attention");
 		jl.setFont(new Font("Comic sans MS",Font.BOLD,18));
-		p1.add(jl );
+		//p1.add(jl );
 		p.add( p1 );
 
 
@@ -198,7 +206,7 @@ public class SearchGUI extends JFrame {
 				queryType = Index.RANKED_QUERY;
 			}
 		};
-		rankedItem.addActionListener( setRankedQuery );
+		assumationItem.addActionListener( setRankedQuery );
 
 	}
 
