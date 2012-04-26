@@ -1,4 +1,4 @@
-package salvation;
+package ir;
 
 import java.util.LinkedList;
 

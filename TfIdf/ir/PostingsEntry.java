@@ -1,5 +1,5 @@
 
-package salvation;
+package ir;
 
 import java.io.Serializable;
 import java.util.LinkedList;

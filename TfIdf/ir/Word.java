@@ -1,4 +1,4 @@
-package salvation;
+package ir;
 
 /**
  * Simple class to keep a word with a corresponding score. 
