@@ -270,15 +270,18 @@ public class MegaIndex implements Index {
 
 		pl.addPostingsEntry(docID, score, offset);
 	}
-
+	/**
+	 * Main search method will return a list of that is considered to be in 
+	 * the same context as query word.
+	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
 		boolean iRank = false; //Intersectionrank
-
+		
 		LinkedList<String> returnList = new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
 
-			// TODO should we do this for every search term?
+		
 			PostingsList pll = rankedSearch(searchTerms);// evalRankQuery(searchTerms);
 
 			for (PostingsEntry pl : pll.getPostings()) {
@@ -287,7 +290,6 @@ public class MegaIndex implements Index {
 
 			LinkedList<LinkedList<Word>> DKMatrix = new LinkedList<LinkedList<Word>>();
 
-			// TODO Get List docIDs from resulting postings list
 			for (int i = 0; i < D && i < pll.getPostings().size(); i++) {
 				PostingsEntry pl = pll.getPostings().get(i);
 				int docID = pl.docID;
@@ -481,8 +483,6 @@ public class MegaIndex implements Index {
 		LinkedList<PostingsList> pl = new LinkedList<PostingsList>();
 
 		// Get unique search terms, and count their frequency
-
-		// TODO Calculates TF for query?
 		for (String s : searchTerms) {
 			int tmp = 0;
 
