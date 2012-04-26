@@ -69,7 +69,7 @@ public class HashedIndex implements Index {
 	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
-		boolean meidi = false;
+		boolean meidi = true;
 		LinkedList<String> returnList = new LinkedList<String>();
 		if (queryType == Index.RANKED_QUERY) {
 			PostingsList pll = rankedSearch(searchTerms);
