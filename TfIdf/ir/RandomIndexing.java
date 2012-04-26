@@ -1,16 +1,15 @@
-
 import java.util.*;
 import java.io.*;
 import ir.SimpleTokenizer;
+
+
 
 public class RandomIndexing {
 
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
-
-	
-
 	private final int CONTEXT = 2;
+	
 	int parsedFiles = 0;
 
 

@@ -42,7 +42,7 @@ public class SearchGUI extends JFrame {
 	public static final int MAX_NUMBER_OF_INDEX_FILES = 10;
 
 	/**  The query type (either intersection, phrase, or ranked). */
-	int queryType = Index.RANKED_QUERY;
+	int queryType = Index.SUMMATION_QUERY;
 
 	/**  The index type (either hashed or mega). */
 	int indexType = Index.HASHED_INDEX;
@@ -206,7 +206,7 @@ public class SearchGUI extends JFrame {
 		Action setRandomQuery = new AbstractAction() {
 			@Override
 			public void actionPerformed( ActionEvent e ) {
-			    queryType = 2;
+			    queryType = Index.RANDOM_QUERY;
 			}
 		    };
 		randomItem.addActionListener( setRandomQuery );
@@ -214,7 +214,7 @@ public class SearchGUI extends JFrame {
 		Action setIntersectQuery = new AbstractAction() {
 			@Override
 			public void actionPerformed( ActionEvent e ) {
-			    queryType = 2;
+			    queryType = Index.INTERSECT_QUERY;
 			}
 		    };
 		intersectItem.addActionListener( setIntersectQuery );
@@ -224,7 +224,7 @@ public class SearchGUI extends JFrame {
 
 		Action setRankedQuery = new AbstractAction() {
 			public void actionPerformed( ActionEvent e ) {
-				queryType = Index.RANKED_QUERY;
+				queryType = Index.SUMMATION_QUERY;
 			}
 		};
 		summationItem.addActionListener( setRankedQuery );
@@ -285,7 +285,10 @@ public class SearchGUI extends JFrame {
 			else if ( "-r".equals( args[i] )) {
 				i++;
 				resultWindow.setText( "\n  Making randomindex, please wait..." );
-				ri.readData(dirNames.peek());
+				for (int j2 = 0; j2 < dirNames.size(); j2++) {
+					ri.readData(dirNames.get(j2));
+				}
+				
 			}
 			else {
 				System.err.println( "Unknown option: " + args[i] );

@@ -33,10 +33,10 @@ public class MegaIndex implements Index {
 	// The directory where to place index files on disk.
 	private static final String path = "./index";
 
-	private final int D = 20; // number of top ranking documents to retrieve
-	private final int K = 50; // number of top ranking words to retrieve
+	private final int D = 40; // number of top ranking documents to retrieve
+	private final int K = 30; // number of top ranking words to retrieve
 	private final int NOR = 5; //Number of results to return to GUI
-	
+
 	/**
 	 * Create a new index and invent a name for it.
 	 */
@@ -73,18 +73,18 @@ public class MegaIndex implements Index {
 				HashMap<String, Integer> dl = (HashMap<String,Integer>) index.get("..docLengths");
 				if (dl == null) {
 					System.err
-							.println("Couldn't retrieve docLengths");
+					.println("Couldn't retrieve docLengths");
 				} else {
 					docLengths.putAll(dl);
 				}
-				
+
 				// Retrieve docIDs
 				HashMap<String, String> m = (HashMap<String, String>) index
 						.get("..docIDs");
 
 				if (m == null) {
 					System.err
-							.println("Couldn't retrieve the associations between docIDs and document names");
+					.println("Couldn't retrieve the associations between docIDs and document names");
 				} else {
 					docIDs.putAll(m);
 				}
@@ -270,52 +270,64 @@ public class MegaIndex implements Index {
 
 		pl.addPostingsEntry(docID, score, offset);
 	}
-
+	/**
+	 * Main search method will return a list of that is considered to be in 
+	 * the same context as query word.
+	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
-		boolean iRank = false; //Intersectionrank
-
-		LinkedList<String> returnList = new LinkedList<String>();
-		if (queryType == Index.RANKED_QUERY) {
-
-			// TODO should we do this for every search term?
-			PostingsList pll = rankedSearch(searchTerms);// evalRankQuery(searchTerms);
-
-			for (PostingsEntry pl : pll.getPostings()) {
-				System.out.println("result: " + docIDs.get("" + pl.docID));
-			}
-
-			LinkedList<LinkedList<Word>> DKMatrix = new LinkedList<LinkedList<Word>>();
-
-			// TODO Get List docIDs from resulting postings list
-			for (int i = 0; i < D && i < pll.getPostings().size(); i++) {
-				PostingsEntry pl = pll.getPostings().get(i);
-				int docID = pl.docID;
-				String file = docIDs.get("" + docID);
-
-				// Get corresponding file given the docID TODO do it for every
-				// docID
-				System.err.println(file);
-				// TODO Ignore documents shorter than 5 words
-				DKMatrix.add(getTopWords(docID, file));
-			}
-			LinkedList<Word> ll = new LinkedList<Word>();
-			if (!iRank) {
-				ll = summationRank(DKMatrix);
-			} else {
-				ll = intersectionRank(DKMatrix, searchTerms.getFirst());
-			}
-			int i = 0;
-			for (Word w : ll) {
-				if(i > NOR){break;}
-				returnList.add("S: " + w.word + " V: " + w.score);
-				i++;
-			}
-
-			return returnList;
+		boolean iRank ;//Intersectionrank
+		if (queryType == Index.SUMMATION_QUERY) {
+			iRank = false; 
+		}else{
+			iRank = true;
 		}
 
-		return null;
+		LinkedList<String> returnList = new LinkedList<String>();
+
+
+
+		PostingsList pll = rankedSearch(searchTerms);// evalRankQuery(searchTerms);
+		if(pll == null)
+		{
+			LinkedList<String> ans =  new LinkedList<String>();
+			ans.add("Word not in index");
+
+			return ans;
+		}
+
+		for (PostingsEntry pl : pll.getPostings()) {
+			System.out.println("result: " + docIDs.get("" + pl.docID));
+		}
+
+		LinkedList<LinkedList<Word>> DKMatrix = new LinkedList<LinkedList<Word>>();
+
+		for (int i = 0; i < D && i < pll.getPostings().size(); i++) {
+			PostingsEntry pl = pll.getPostings().get(i);
+			int docID = pl.docID;
+			String file = docIDs.get("" + docID);
+
+			// Get corresponding file given the docID TODO do it for every
+			// docID
+			System.err.println(file);
+			// TODO Ignore documents shorter than 5 words
+			DKMatrix.add(getTopWords(docID, file));
+		}
+		LinkedList<Word> ll = new LinkedList<Word>();
+		if (!iRank) {
+			ll = summationRank(DKMatrix);
+		} else {
+			ll = intersectionRank(DKMatrix, searchTerms.getFirst());
+		}
+		int i = 0;
+		for (Word w : ll) {
+			if(i > NOR){break;}
+			returnList.add("S: " + w.word + " V: " + w.score);
+			i++;
+		}
+
+		return returnList;
+
 
 	}
 
@@ -340,10 +352,10 @@ public class MegaIndex implements Index {
 			while (tok.hasMoreTokens()) {
 				String str = tok.nextToken();
 				if(!Indexer.stopWord.contains(str)){
-				hm.put(str, new Double(tfIdf(str, docID)));
+					hm.put(str, new Double(tfIdf(str, docID)));
 				}
 			}
-			
+
 			reader.close();
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -394,9 +406,9 @@ public class MegaIndex implements Index {
 		for (String key : scoreBoard.keySet()) {
 			rankedList.add(new Word(key, scoreBoard.get(key)));
 		}
-		
+
 		Collections.sort(rankedList);
-		
+
 		return rankedList;
 	}
 
@@ -436,25 +448,25 @@ public class MegaIndex implements Index {
 					wordScores.put(
 							w.toString(),
 							w.score
-									+ intersection(getPostings(query),
-											getPostings(w.toString())).size());
+							+ intersection(getPostings(query),
+									getPostings(w.toString())).size());
 					System.out.println("Score for "
 							+ w.toString()
 							+ " is "
 							+ w.score
 							+ intersection(getPostings(query),
 									getPostings(w.toString())).size()
-							+ ": "
-							+ intersection(getPostings(query),
-									getPostings(w.toString())).size()
-							+ " intersections");
+									+ ": "
+									+ intersection(getPostings(query),
+											getPostings(w.toString())).size()
+											+ " intersections");
 				} else if (getPostings(query) == null
 						&& getPostings(w.toString()) == null) {
 					System.err.println("Postingslist for " + query + " and "
 							+ w.toString() + " is null");
 				} else if (getPostings(query) == null) {
 					System.err
-							.println("Postingslist for " + query + " is null");
+					.println("Postingslist for " + query + " is null");
 				} else {
 					System.err.println("Postingslist for " + w.toString()
 							+ " is null");
@@ -481,8 +493,6 @@ public class MegaIndex implements Index {
 		LinkedList<PostingsList> pl = new LinkedList<PostingsList>();
 
 		// Get unique search terms, and count their frequency
-
-		// TODO Calculates TF for query?
 		for (String s : searchTerms) {
 			int tmp = 0;
 

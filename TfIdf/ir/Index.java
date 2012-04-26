@@ -20,7 +20,9 @@ public interface Index {
     /* Query types */
 
     
-    public static final int RANKED_QUERY = 0;
+    public static final int SUMMATION_QUERY = 0;
+    public static final int INTERSECT_QUERY = 1;
+    public static final int RANDOM_QUERY = 2;
 	
     public HashMap<String, String> docIDs = new HashMap<String,String>();
     public HashMap<String,Integer> docLengths = new HashMap<String,Integer>();
