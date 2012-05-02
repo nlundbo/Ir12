@@ -1,7 +1,8 @@
+package ir;
+
 import java.util.*;
 import java.io.*;
 import ir.SimpleTokenizer;
-
 
 
 public class RandomIndexing {
@@ -142,9 +143,9 @@ public class RandomIndexing {
 		ri.readData("../files/1000/");
 		ri.readData("../files/2000/");
 		ri.readData("../files/3000/");
-		//ri.readData("../files/4000/");
-		//ri.readData("../files/5000/");
-		String term = "varmt";
+		ri.readData("../files/4000/");
+		ri.readData("../files/5000/");
+		String term = "penis";
 		System.out.println("Finding synonyms for: " + term);
 		
 		
