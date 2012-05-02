@@ -22,7 +22,8 @@ public interface Index {
     
     public static final int SUMMATION_QUERY = 0;
     public static final int INTERSECT_QUERY = 1;
-    public static final int RANDOM_QUERY = 2;
+    public static final int ONLY_INTERSECT = 2;
+    public static final int RANDOM_QUERY = 3;
 	
     public HashMap<String, String> docIDs = new HashMap<String,String>();
     public HashMap<String,Integer> docLengths = new HashMap<String,Integer>();

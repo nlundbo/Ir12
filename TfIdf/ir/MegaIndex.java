@@ -33,7 +33,7 @@ public class MegaIndex implements Index {
 	// The directory where to place index files on disk.
 	private static final String path = "./index";
 
-	private final int D = 40; // number of top ranking documents to retrieve
+	private final int D = 15; // number of top ranking documents to retrieve
 	private final int K = 30; // number of top ranking words to retrieve
 	private final int NOR = 5; //Number of results to return to GUI
 
@@ -276,12 +276,6 @@ public class MegaIndex implements Index {
 	 */
 	public LinkedList<String> search(LinkedList<String> searchTerms,
 			int queryType) {
-		boolean iRank ;//Intersectionrank
-		if (queryType == Index.SUMMATION_QUERY) {
-			iRank = false; 
-		}else{
-			iRank = true;
-		}
 
 		LinkedList<String> returnList = new LinkedList<String>();
 
@@ -314,11 +308,20 @@ public class MegaIndex implements Index {
 			DKMatrix.add(getTopWords(docID, file));
 		}
 		LinkedList<Word> ll = new LinkedList<Word>();
-		if (!iRank) {
-			ll = summationRank(DKMatrix);
-		} else {
-			ll = intersectionRank(DKMatrix, searchTerms.getFirst());
+		switch(queryType) {
+			case 0:
+				ll = summationRank(DKMatrix);
+				break;
+			case 1:
+				ll = intersectionRank(DKMatrix, searchTerms.getFirst(), false);
+				break;
+			case 2:
+				ll = intersectionRank(DKMatrix, searchTerms.getFirst(), true);
+				break;
+			default:
+				break; // lol
 		}
+		
 		int i = 0;
 		for (Word w : ll) {
 			if(i > NOR){break;}
@@ -425,8 +428,7 @@ public class MegaIndex implements Index {
 	 * @return LinkedList of Words containing a co-occurence score.
 	 */
 	public LinkedList<Word> intersectionRank(
-			LinkedList<LinkedList<Word>> DKMatrix, String query) {
-		boolean onlyIntersection = false; // otherwise, multiply by tfidf
+			LinkedList<LinkedList<Word>> DKMatrix, String query, boolean onlyIntersection) {
 		HashMap<String, Double> wordScores = new HashMap<String, Double>();
 
 		for (LinkedList<Word> ll : DKMatrix) {
