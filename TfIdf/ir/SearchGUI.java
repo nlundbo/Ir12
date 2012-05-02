@@ -71,9 +71,10 @@ public class SearchGUI extends JFrame {
 	JMenu optionsMenu = new JMenu( "Search options" );
 	JMenuItem saveItem = new JMenuItem( "Save index and exit" );
 	JMenuItem quitItem = new JMenuItem( "Quit" );
-	JRadioButtonMenuItem summationItem = new JRadioButtonMenuItem( "Summation extraction" );
-	JRadioButtonMenuItem intersectItem = new JRadioButtonMenuItem( "Intersect extraction" );
-	JRadioButtonMenuItem randomItem = new JRadioButtonMenuItem( "Randomindex extraction" );
+	JRadioButtonMenuItem summationItem = new JRadioButtonMenuItem( "Summation expansion" );
+	JRadioButtonMenuItem intersectItem = new JRadioButtonMenuItem( "Intersect expansion" );
+	JRadioButtonMenuItem onlyintersectItem = new JRadioButtonMenuItem( "Only Intersect expansion" );
+	JRadioButtonMenuItem randomItem = new JRadioButtonMenuItem( "Randomindex expansion" );
 	ButtonGroup queries = new ButtonGroup();
 
 
@@ -97,9 +98,11 @@ public class SearchGUI extends JFrame {
 		fileMenu.add( quitItem );
 		optionsMenu.add( summationItem );
 		optionsMenu.add( intersectItem );
+		optionsMenu.add( onlyintersectItem );
 		optionsMenu.add( randomItem );
 		queries.add( summationItem );
 		queries.add( intersectItem );
+		queries.add( onlyintersectItem );
 		queries.add( randomItem );
 		summationItem.setSelected( true );
 		p.add( menuBar );
@@ -145,7 +148,7 @@ public class SearchGUI extends JFrame {
 				// (this might corrupt the index).
 				LinkedList<String> result;
 				synchronized ( indexLock ) {
-					if(queryType==2){
+					if(queryType==3){
 						result = ri.getSynonyms(searchterms.pop());//TODO tar bara ett ord
 					}else{
 					result = indexer.index.search( searchterms, queryType );
@@ -153,7 +156,7 @@ public class SearchGUI extends JFrame {
 				}
 				StringBuffer allWords = new StringBuffer();
 				StringBuffer orQuery = new StringBuffer();
-				if ( result != null ) {
+				if ( result.size()!=0 ) {
 					orQuery.append(SimpleTokenizer.normalize( queryWindow.getText() ));
 					for ( int i=0; i<Math.min(result.size(),5); i++ ) {
 						orQuery.append( " or " );
@@ -210,6 +213,15 @@ public class SearchGUI extends JFrame {
 			}
 		    };
 		randomItem.addActionListener( setRandomQuery );
+		
+		Action setonlyIntQuery = new AbstractAction() {
+			@Override
+			public void actionPerformed( ActionEvent e ) {
+			    queryType = Index.ONLY_INTERSECT;
+			}
+		    };
+		onlyintersectItem.addActionListener( setonlyIntQuery  );
+		
 		
 		Action setIntersectQuery = new AbstractAction() {
 			@Override
