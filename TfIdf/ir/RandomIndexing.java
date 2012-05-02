@@ -1,7 +1,8 @@
+package ir;
+
 import java.util.*;
 import java.io.*;
 import ir.SimpleTokenizer;
-
 
 
 public class RandomIndexing {
@@ -65,7 +66,7 @@ public class RandomIndexing {
 	}
 
 
-	public LinkedList<Word> getSynonyms(String term) {
+	public LinkedList<String> getSynonyms(String term) {
 		
 		Set<String> keys = index.keySet();
 		int idx;
@@ -87,8 +88,16 @@ public class RandomIndexing {
 			double d = wv.getDistance(t);
 			ll.add( new Word(s,d));
 		}
+		Collections.sort(ll);
 
-		return ll;
+		LinkedList<String> ll2 = new LinkedList<String>();
+
+		for(int i =0; i< 5; ++i){
+			Word a = ll.pollLast();
+			ll2.add(a.toString());
+		}
+
+		return ll2;
 	}
 
 
@@ -142,13 +151,13 @@ public class RandomIndexing {
 		ri.readData("../files/1000/");
 		ri.readData("../files/2000/");
 		ri.readData("../files/3000/");
-		//ri.readData("../files/4000/");
-		//ri.readData("../files/5000/");
-		String term = "varmt";
+		ri.readData("../files/4000/");
+		ri.readData("../files/5000/");
+		String term = "penis";
 		System.out.println("Finding synonyms for: " + term);
 		
-		
-		LinkedList<Word> ll = ri.getSynonyms(term);
+/*		
+		//LinkedList<Word> ll = ri.getSynonyms(term);
 
 		if(ll == null){
 			System.out.println("Word not found in any context.");
@@ -164,6 +173,7 @@ public class RandomIndexing {
 		//	System.out.println(ri.contextVectors.get( ri.index.get(a.word)));
 
 		}
+		*/
 	}
 
 	private class Word implements Comparable<Word> {

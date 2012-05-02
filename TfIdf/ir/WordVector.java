@@ -1,3 +1,4 @@
+package ir;
 import java.util.*;
 
 
@@ -5,6 +6,7 @@ public class WordVector{
 	public short [] v;
 	private final int NUM_ONES = 8; // Must be 2-tupel
 	private final int K = 1000;	
+	private boolean isSparse = false;
 
 	private ArrayList<Short> generateUniquePos(Random rnd){
 		ArrayList<Short> out = new ArrayList<Short>(K);
@@ -67,12 +69,21 @@ public class WordVector{
 		}
 	}
 
+	private void initSparse(){
+		v = new short[NUM_ONES];
+		for(int i =0; i< NUM_ONES; ++i){
+			v[i] = 0;
+		}
+	}
+
+
 	public WordVector(){
+		isSparse = false;
 		init();
 	}
 
 	public WordVector(Random rnd){
-		init();
+		init();//Sparse();
 		ArrayList<Short> pos = generateUniquePos(rnd);
 		for(int i =0; i< pos.size(); ++i){
 			v[pos.get(i)] = (i>NUM_ONES/2)?(short)-1:(short)1;
