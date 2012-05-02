@@ -271,7 +271,13 @@ public class SearchGUI extends JFrame {
 				if ( i < args.length ) {
 					indexFiles.add( args[i++] );
 				}
-			} 
+			}
+			else if ( "-ai".equals( args[i] )) {
+				i++;
+				if ( i < args.length ) {
+					indexFiles.add( args[i++] );
+				}
+			}
 			else if ( "-d".equals( args[i] )) {
 				i++;
 				if ( i < args.length ) {

@@ -3,6 +3,13 @@ package ir;
 import java.io.File;
 import java.util.LinkedList;
 
+/**
+ * I make you indexes
+ * See main
+ * @author Mattias
+ *
+ */
+
 public class MakingIndexes {
 
 
@@ -13,13 +20,17 @@ public class MakingIndexes {
 
 
 	public MakingIndexes(String[] args) {
-		
+		long startTime = System.currentTimeMillis();
 		decodeArgs(args);
 		System.out.println("BÖrjar indexera");
 		createIndexes();
-		System.out.println("Indexering klart, börjar merga");
-		//mergeIndexes();
+		System.out.println("Indexering klart, börjar merga, split " + (System.currentTimeMillis()-startTime) + " ms!");
+		mergeIndexes();
+		System.out.println("Mergat klart, börjar spara, split "  + (System.currentTimeMillis()-startTime) + " ms!");
+		saveToIndexes();
+		System.out.println("Använd tid = " + (System.currentTimeMillis()-startTime) + " ms!");
 		System.out.println("Klart!");
+		
 	}
 
 	private void saveToIndexes() {
@@ -27,6 +38,29 @@ public class MakingIndexes {
 	}
 
 	private void mergeIndexes() {
+		File dokDir = new File( "index");
+
+		
+		if ( dokDir.canRead() ) {
+			if ( dokDir.isDirectory() ) {
+				
+				File[] doc = dokDir.listFiles();
+				LinkedList<String> fs = new LinkedList<String>();
+				for (int i = 0; i < doc.length; i+=2) {
+					
+					fs.add(doc[i].toString().split("[\\.|\\\\]+")[1]);
+					
+				}
+				
+				indexer = new Indexer( fs );
+				
+				for (int i = 0; i < doc.length; i++) {
+					doc[i].delete();
+				}
+			}
+		}
+		;
+		
 
 
 	}
@@ -41,7 +75,7 @@ public class MakingIndexes {
 			System.out.println("saving "+dokDir.toString());
 			saveToIndexes();
 			System.out.println("Done saving");
-			
+
 		}		
 	}
 
@@ -69,7 +103,7 @@ public class MakingIndexes {
 	}
 
 	public static void main (String[] args){
-		
+
 		new MakingIndexes(args);
 	}
 
