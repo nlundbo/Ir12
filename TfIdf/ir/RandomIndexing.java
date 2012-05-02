@@ -9,7 +9,7 @@ public class RandomIndexing {
 
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
-	private final int CONTEXT = 4;
+	private final int CONTEXT = 2;
 	
 	private static final int NUM_ANS = 20;
 	int parsedFiles = 0;
@@ -148,18 +148,19 @@ public class RandomIndexing {
 
 		RandomIndexing ri = new RandomIndexing();				
 		//ri.readData("../50/");
-		ri.readData("../files/1000/");
-		ri.readData("../files/2000/");
-		ri.readData("../files/3000/");
-		ri.readData("../files/4000/");
-		ri.readData("../files/5000/");
-		ri.readData("../files/7000/");
-		ri.readData("../files/8000/");
+		String rootDir = "../files/";
+		ri.readData(rootDir + "1000/");
+		ri.readData(rootDir + "2000/");
+		ri.readData(rootDir + "3000/");
+		ri.readData(rootDir + "4000/");
+		ri.readData(rootDir + "5000/");
+		ri.readData(rootDir + "7000/");
+		ri.readData(rootDir + "8000/");
 		System.gc();
-		ri.readData("../files/9000/");
-		ri.readData("../files/10000/");
-		ri.readData("../files/11000/");
-		ri.readData("../files/12000/");
+		ri.readData(rootDir + "9000/");
+		ri.readData(rootDir + "10000/");
+		ri.readData(rootDir + "11000/");
+		ri.readData(rootDir + "12000/");
 
 		
 	    InputStreamReader inp = new InputStreamReader(System.in);
