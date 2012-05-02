@@ -26,7 +26,16 @@ public class WordVector{
 			v[i] += wv.v[i];
 		}
 	}
+	private short sign(short i){
+		return (i>=0)?(short)1:(short)-1;
+	}
 
+	public void addSparse(WordVector sparseWV){
+		for(int i = 0 ; i< sparseWV.size(); ++i){
+			short tmp = sparseWV.v[i];
+			v[ sign(tmp)*tmp ] += sign(tmp);
+		}
+	}
 
 	private WordVector addToNew(WordVector b){		
 		WordVector out = new WordVector();
@@ -36,7 +45,7 @@ public class WordVector{
 		return out;
 	}
 
-	public int size(){
+	public int size(){		
 		return v.length;
 	}
 
@@ -62,32 +71,28 @@ public class WordVector{
 		return sum;
 	}
 
-	private void init(){
-		v = new short[K];
-		for(int i =0; i< K; ++i){
-			v[i] = 0;
-		}
-	}
+	
 
-	private void initSparse(){
-		v = new short[NUM_ONES];
-		for(int i =0; i< NUM_ONES; ++i){
-			v[i] = 0;
-		}
-	}
-
-
-	public WordVector(){
+	public WordVector(){		
 		isSparse = false;
-		init();
+		v = new short[K];
+		for(int i =0; i< K; ++i)
+			v[i] = 0;
 	}
 
 	public WordVector(Random rnd){
-		init();//Sparse();
+		isSparse = true;
+		v = new short[NUM_ONES];	
 		ArrayList<Short> pos = generateUniquePos(rnd);
 		for(int i =0; i< pos.size(); ++i){
-			v[pos.get(i)] = (i>NUM_ONES/2)?(short)-1:(short)1;
+			v[i] = (i>NUM_ONES/2)?(short) (-pos.get(i) ): (short) (pos.get(i));
 		}
+	}
+
+	public static void main(String [] args){
+		Random rnd = new Random();
+		WordVector a = new WordVector(rnd);
+		System.out.println(a);
 	}
 
 	@Override
@@ -98,7 +103,7 @@ public class WordVector{
 			if(i != v.length -1){
 				sb.append(v[i]+", ");
 			}else{
-				sb.append(v[i]+"]\n");
+				sb.append(v[i]+"]");
 			}
 		}
 		return sb.toString();

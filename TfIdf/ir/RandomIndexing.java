@@ -9,8 +9,9 @@ public class RandomIndexing {
 
 	private static boolean PAGE = false;
 	private static boolean DEBUG = false;
-	private final int CONTEXT = 2;
+	private final int CONTEXT = 4;
 	
+	private static final int NUM_ANS = 20;
 	int parsedFiles = 0;
 
 
@@ -58,7 +59,7 @@ public class RandomIndexing {
 			
 			for(int j=start; j <= stop; ++j){
 				if(j != i){					
-					context.add( wordVectors.get( index.get( tokens.get(j) )) );
+					context.addSparse( wordVectors.get( index.get( tokens.get(j) )) );
 				}
 			}
 
@@ -80,7 +81,7 @@ public class RandomIndexing {
 		System.out.println("index " + idx);
 
 		WordVector wv = contextVectors.get(idx);
-
+		System.out.println(wv);
 		LinkedList<Word> ll = new LinkedList<Word>();
 
 		for(String s : keys){
@@ -92,10 +93,9 @@ public class RandomIndexing {
 
 		LinkedList<String> ll2 = new LinkedList<String>();
 
-		for(int i =0; i< 5; ++i){
-			Word a = ll.pollLast();
-			ll2.add(a.toString());
-		}
+		for(int i =0; i< NUM_ANS; ++i)			
+			ll2.add(ll.pollLast().toString());
+		
 
 		return ll2;
 	}
@@ -122,7 +122,7 @@ public class RandomIndexing {
 			    	}
 				}
 		    } else {
-				System.err.println( "Indexing " + f.getPath() );					
+				//System.err.println( "Indexing " + f.getPath() );					
 				try {			
 				    Reader reader = new FileReader( f );
 				    SimpleTokenizer tok = new SimpleTokenizer( reader );
@@ -153,27 +153,36 @@ public class RandomIndexing {
 		ri.readData("../files/3000/");
 		ri.readData("../files/4000/");
 		ri.readData("../files/5000/");
-		String term = "penis";
-		System.out.println("Finding synonyms for: " + term);
+		ri.readData("../files/7000/");
+		ri.readData("../files/8000/");
+		System.gc();
+		ri.readData("../files/9000/");
+		ri.readData("../files/10000/");
+		ri.readData("../files/11000/");
+		ri.readData("../files/12000/");
+
 		
-/*		
-		//LinkedList<Word> ll = ri.getSynonyms(term);
+	    InputStreamReader inp = new InputStreamReader(System.in);
+    	BufferedReader br = new BufferedReader(inp);
 
-		if(ll == null){
-			System.out.println("Word not found in any context.");
-			return;
-		}
-		Collections.sort(ll);
-		//System.out.println( "size " + ri.contextVectors.size() );
-		//System.out.println( ri.contextVectors.get( ri.ndex.get(term)));
+    	LinkedList<String> ll;
+    	String s = null;
+    	while(true){
+    		System.out.print(">>");
+    		try{
+    			s = br.readLine();
+    		}catch(Exception e){}
 
-		for(int i =0; i< 20; ++i){
-			Word a = ll.pollLast();
-			System.out.println(a);
-		//	System.out.println(ri.contextVectors.get( ri.index.get(a.word)));
-
-		}
-		*/
+    		if (s == null)break;
+    		System.out.println("Finding synonyms for: " + s);	
+    		ll = ri.getSynonyms(s);
+			if(ll == null){
+				System.out.println("Word not found in any context.");			
+			}else{		
+				for(String res : ll)
+					System.out.println(res);
+			}
+    	}
 	}
 
 	private class Word implements Comparable<Word> {
