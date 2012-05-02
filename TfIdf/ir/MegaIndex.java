@@ -313,9 +313,11 @@ public class MegaIndex implements Index {
 				ll = summationRank(DKMatrix);
 				break;
 			case 1:
+				System.err.println("Meidi 1");
 				ll = intersectionRank(DKMatrix, searchTerms.getFirst(), false);
 				break;
 			case 2:
+				System.err.println("Meidi 2");
 				ll = intersectionRank(DKMatrix, searchTerms.getFirst(), true);
 				break;
 			default:
@@ -483,7 +485,8 @@ public class MegaIndex implements Index {
 			wordList.add(w);
 		}
 		Collections.sort(wordList);
-		if (wordList.getFirst() != null) {
+		
+		if (!wordList.isEmpty()) {
 			System.out.println("The best hit is " + wordList.getFirst()
 					+ " with score " + wordList.getFirst().score);
 		}
