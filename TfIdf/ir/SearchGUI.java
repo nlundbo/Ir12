@@ -76,6 +76,7 @@ public class SearchGUI extends JFrame {
 	JRadioButtonMenuItem onlyintersectItem = new JRadioButtonMenuItem( "Only Intersect expansion" );
 	JRadioButtonMenuItem randomItem = new JRadioButtonMenuItem( "Randomindex expansion" );
 	ButtonGroup queries = new ButtonGroup();
+	private static boolean unrandomIndex = true;
 
 
 	/* ----------------------------------------------- */
@@ -113,7 +114,6 @@ public class SearchGUI extends JFrame {
 
 		JLabel jl = new JLabel( "Sebastians MOM is so poor she couldn't even pay attention");
 		jl.setFont(new Font("Comic sans MS",Font.BOLD,18));
-		//p1.add(jl );
 		p.add( p1 );
 
 
@@ -173,7 +173,7 @@ public class SearchGUI extends JFrame {
 				}
 				else {
 					orQuery.append("");
-					allWords.append( "\nDidn't found any extraction\n\n" );
+					allWords.append( "\nCould not expand \""+queryWindow.getText() +"\"\n\n" );
 				}
 				orWindow.setText( orQuery.toString() );
 				orWindow.setCaretPosition( 0 );
@@ -300,10 +300,15 @@ public class SearchGUI extends JFrame {
 				i++;
 				indexType = Index.MEGA_INDEX;
 			}
+			else if ("-p".equals(args[i])){
+				i++;
+				unrandomIndex = false;
+			}
 			else if ( "-r".equals( args[i] )) {
 				i++;
 				resultWindow.setText( "\n  Making randomindex, please wait..." );
 				for (int j2 = 0; j2 < dirNames.size(); j2++) {
+					resultWindow.append("\n Start file: " + dirNames.get(j2));
 					ri.readData(dirNames.get(j2));
 				}
 				
@@ -336,7 +341,7 @@ public class SearchGUI extends JFrame {
 		SearchGUI s = new SearchGUI();
 		s.createGUI();
 		s.decodeArgs( args );
-		s.index();
+		if(unrandomIndex) s.index();
 	}
 
 }

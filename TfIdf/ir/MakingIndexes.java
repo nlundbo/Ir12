@@ -47,9 +47,7 @@ public class MakingIndexes {
 				File[] doc = dokDir.listFiles();
 				LinkedList<String> fs = new LinkedList<String>();
 				for (int i = 0; i < doc.length; i+=2) {
-					
 					fs.add(doc[i].toString().split("[\\.|\\\\]+")[1]);
-					
 				}
 				
 				indexer = new Indexer( fs );
