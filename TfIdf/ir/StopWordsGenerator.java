@@ -7,12 +7,12 @@ import ir.SimpleTokenizer;
 	javac -d . StopWords.java
 	java ir.StopWords
 */
-public class StopWords{
+public class StopWordsGenerator{
 
 	public  HashMap<String,Integer> counter = new HashMap<String,Integer>();
 	public  static final int NUM_STOP_WORDS = 30;
 
-	public StopWords(){}
+	public StopWordsGenerator(){}
 
 	public  void readData(String dir){
 		File dokDir = new File( dir);		
@@ -68,7 +68,7 @@ public class StopWords{
 
 
 	public static final void main(String [] args){
-		StopWords s = new StopWords();
+		StopWordsGenerator s = new StopWordsGenerator();
 		s.readData("../files/1000/");
 		s.readData("../files/2000/");
 		s.readData("../files/3000/");
