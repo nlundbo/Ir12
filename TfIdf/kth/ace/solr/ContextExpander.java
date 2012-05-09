@@ -27,10 +27,10 @@ public class ContextExpander {
 	public static final int MIXED_RANK = 3;
 	
 	static CommonsHttpSolrServer server; //Solr server connection
-	private  int D = 50; // number of top ranking documents to retrieve
-	private  int W = 10; // number of top ranking words to retrieve
+	private  int D = 15; // number of top ranking documents to retrieve
+	private  int W = 5; // number of top rankingz words to retrieve
 	private  int NOR = 10; //Number of results to return to GUI
-	private int minDocsize = 1; //Minimum document size to consider
+	private int minDocsize = 200; //Minimum document size to consider
 	private DWMatrix dwMatrix; //Document|Word Matrix
 	
 	
@@ -78,7 +78,7 @@ public class ContextExpander {
 		query.set("tv.tf_idf", "true");
 		query.set("rows", D+"" );
 		query.set("fq", "docsize>"+minDocsize);
-		System.err.println("Query " + query.toString());
+		
 
 		return server.query(query);
 	}
