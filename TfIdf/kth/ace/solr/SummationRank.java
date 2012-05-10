@@ -14,6 +14,7 @@ import java.util.LinkedList;
 
 public class SummationRank implements ACERanker {
 
+	private int docBoost = 0;
 	/**
 	 * Default constructor
 	 */
@@ -29,16 +30,18 @@ public class SummationRank implements ACERanker {
 	public LinkedList<Word> getRankedList(DWMatrix matrix) {
 		LinkedList<LinkedList<Word>> dwMatrix = matrix.getMatrix();
 		HashMap<String, Double> scoreBoard = new HashMap<String, Double>();
-
+		if(!dwMatrix.isEmpty())
+			docBoost = dwMatrix.getFirst().size(); //Boosting docrank
 		for (LinkedList<Word> lw : dwMatrix) {
 			int i = lw.size();
 			for (Word w : lw) {
 				if (scoreBoard.containsKey(w.getWord())) {
-					scoreBoard.put(w.getWord(), scoreBoard.get(w.getWord()) + i);
+					scoreBoard.put(w.getWord(), scoreBoard.get(w.getWord()) + i+docBoost);
 				} else {
-					scoreBoard.put(w.getWord(), new Double(i));
+					scoreBoard.put(w.getWord(), new Double(i)+docBoost);
 				}
 				i--;
+				docBoost = docBoost == 0 ? 0 : docBoost--;
 			}
 		}
 
@@ -52,4 +55,5 @@ public class SummationRank implements ACERanker {
 
 		return rankedList;
 	}
+	
 }
