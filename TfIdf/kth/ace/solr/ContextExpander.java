@@ -11,6 +11,8 @@ package kth.ace.solr;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
@@ -24,19 +26,19 @@ public class ContextExpander {
 
 	public static final int SUMMATION_RANK = 1;
 	public static final int INTERSECT_RANK = 2;
-	public static final int MIXED_RANK = 3;
-
+	public static final int MERGED_RANK = 3;
+	private static final int MAX_SCORE = 1000;
+	
 	static CommonsHttpSolrServer server; // Solr server connection
-	private int D = 100; // number of top ranking documents to retrieve
-	private int W = 10; // number of top rankingz words to retrieve
-	private int NOR = 10; // Number of results to return to GUI
-	private int titleBoost = 10; // Boost documents if queryword appears in
-									// title
-	private int minDocsize = 1000; // Minimum document size to consider
+	private int D = 50; // number of top ranking documents to retrieve
+	private int W = 10; // number of top ranking words to retrieve
+	private int NOR = 20; // Number of results to return to GUI 
+									
+	private int minDocsize = 600; // Minimum document size to consider
 	private DWMatrix dwMatrix; // Document|Word Matrix
 
 	private ArrayList<String> queryWords = new ArrayList<String>();
-	private int queryType = SUMMATION_RANK;
+	private int queryType = MERGED_RANK;
 	private String strQuery;
 
 	/**
@@ -74,22 +76,9 @@ public class ContextExpander {
 		query.set("qt", "tvrh");
 		query.set("tv.tf_idf", "true");
 		query.set("rows", D + "");
-		query.set("defType", "dismax");
 		query.set("fq", "docsize:[" + minDocsize + " TO *]");
-		StringBuilder sb = new StringBuilder();
-		sb.append("title:(");
-
-//		for (int i = 0; i < queryWords.size(); i++) {
-//			sb.append(queryWords.get(i));
-//			if (i < (queryWords.size() - 1)) {
-//				sb.append(" OR ");
-//			}
-//		}
-//		sb.append(")^").append(titleBoost);
-//		
-//		query.set("bq", sb.toString());
 		
-		System.err.println(query.toString());
+		if(DEBUG){System.err.println(query.toString());};
 
 		return server.query(query);
 	}
@@ -195,9 +184,11 @@ public class ContextExpander {
 			return sr.getRankedList(dwMatrix);
 		case INTERSECT_RANK:
 			return ir.getRankedList(dwMatrix);
-		case MIXED_RANK:
-			return mixedRank(sr.getRankedList(dwMatrix),
-					ir.getRankedList(dwMatrix));
+		case MERGED_RANK:
+			LinkedList<LinkedList<Word>> mtrx = new LinkedList<LinkedList<Word>>();
+			mtrx.add(sr.getRankedList(dwMatrix));
+			mtrx.add(ir.getRankedList(dwMatrix));
+			return mergeRanks(mtrx);
 		default:
 			return sr.getRankedList(dwMatrix);
 		}
@@ -211,21 +202,57 @@ public class ContextExpander {
 	 * @param intersectRank
 	 * @return
 	 */
-	private LinkedList<Word> mixedRank(LinkedList<Word> summationRank,
-			LinkedList<Word> intersectRank) {
-		LinkedList<Word> results = new LinkedList<Word>();
-
-		HashSet<String> inIntersect = new HashSet<String>();
-		for (Word word : intersectRank) {
-			inIntersect.add(word.getWord());
+	private LinkedList<Word> mergeRanks(LinkedList<LinkedList<Word>> scoreMatrix) {
+		
+		//Normalize all scores
+		for(LinkedList<Word> lw : scoreMatrix)
+		{
+			double scoreSum = scoreSum(lw);
+			for(Word w : lw)
+			{
+				double oldScore = w.getScore();
+				w.setScore((w.getScore()/scoreSum)*MAX_SCORE);
+			}
 		}
-
-		for (Word word : summationRank) {
-			if (inIntersect.contains(word.getWord()))
-				results.add(word);
+		
+		
+		
+		HashMap<String, Word> resultMap = new HashMap<String,Word>();
+		//TODO Verify that references are handled correctly
+		for(LinkedList<Word> lw : scoreMatrix)
+		{
+			for(Word w : lw)
+			{
+				if(resultMap.containsKey(w.getWord()))
+				{
+					Word tmp = resultMap.get(w.getWord());
+					tmp.setScore(tmp.getScore()+w.getScore());
+				}else{
+					resultMap.put(w.getWord(),w);
+				}
+			}
 		}
-
+		LinkedList<Word> results = new LinkedList<Word>(resultMap.values());
+		Collections.sort(results);
+		
+		System.gc(); //TODO Note.. garbage collection
+		
 		return results;
+	}
+	
+	/**
+	 * Sum up the score for all the the words in wordlist
+	 * @param wordlist
+	 * @return
+	 */
+	private double scoreSum(LinkedList<Word> wordlist)
+	{
+		int res = 0;
+		for(Word w : wordlist)
+		{
+			res += w.getScore();
+		}
+		return res;
 	}
 
 	/**
