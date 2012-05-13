@@ -38,7 +38,7 @@ public class ContextExpander {
 	private DWMatrix dwMatrix; // Document|Word Matrix
 
 	private ArrayList<String> queryWords = new ArrayList<String>();
-	private int queryType = MERGED_RANK;
+	private int queryType = SUMMATION_RANK;
 	private String strQuery;
 
 	/**
@@ -118,7 +118,7 @@ public class ContextExpander {
 		for (String w : query.split(" ")) {
 			queryWords.add(w.toLowerCase());
 		}
-
+		
 		return expandContext(query);
 	}
 
