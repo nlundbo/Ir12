@@ -10,8 +10,8 @@ import org.apache.solr.common.util.NamedList;
 
 public class DWMatrix {
 	private LinkedList<LinkedList<Word>> Matrix;
-	private final int D = 150; // number of top ranking documents to retrieve
-	private final int W = 10; // number of top ranking words to retrieve
+	private int D ; // number of top ranking documents to retrieve
+	private int W ; // number of top ranking words to retrieve
 	
 	/**
 	 * Constructor for the DWMatrix, takes a QueryResponse and generates DWMatrix.
@@ -21,6 +21,8 @@ public class DWMatrix {
 	 */
 	public DWMatrix(QueryResponse solrRsp , int D , int W)
 	{
+		this.D = D;
+		this.W = W;
 		Matrix = cropMatrix(parseTfIdfs(solrRsp));
 	}
 	

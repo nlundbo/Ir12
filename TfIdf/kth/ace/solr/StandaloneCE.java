@@ -15,7 +15,7 @@ public class StandaloneCE {
 		String query = "";
 		System.out.print("Enter Query >>");
 		while(!(query=sc.nextLine()).equals("/q")){
-			LinkedList<Word> ace = new ContextExpander().postUserQuery(query);
+			LinkedList<Word> ace = new ContextExpander().postUserQuery(query,30,10,3,1000);
 			
 			for (int i = 0; i < Math.min(ace.size(), 10); i++) {
 				System.out.println(ace.get(i).toString());

@@ -22,6 +22,7 @@ public class IntersectRank implements ACERanker {
 	
 	
 	public LinkedList<Word> getRankedList(DWMatrix matrix) {
+		int p = 0;
 		LinkedList<LinkedList<Word>> dwMatrix = matrix.getMatrix();
 		LinkedList<Word> result = new LinkedList<Word>();
 		HashSet<String> uniqueWords = new HashSet<String>();
@@ -32,10 +33,14 @@ public class IntersectRank implements ACERanker {
 					try {
 						SolrQuery query = new SolrQuery();
 						query.setQuery(orgQuery+" AND "+"\""+word.getWord()+"\"");
+						query.set("fl", "numFound");
 						double hits = server.query(query).getResults().getNumFound();
 						result.add(new Word(word.getWord(),hits));
+						System.err.println(p);
+						p++;
+						
 					} catch (SolrServerException  e) {
-						//TODO handle better more appropriately.
+						//TODO handle more appropriately.
 						System.err.println("SolrServerException during intersectRank returning n");
 						e.printStackTrace();
 						return null;

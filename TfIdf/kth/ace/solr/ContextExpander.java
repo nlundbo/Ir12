@@ -13,7 +13,6 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 
 import org.apache.solr.client.solrj.SolrQuery;
@@ -21,6 +20,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 
+@SuppressWarnings("deprecation")
 public class ContextExpander {
 	private static final boolean DEBUG = true;
 
@@ -30,15 +30,13 @@ public class ContextExpander {
 	private static final int MAX_SCORE = 1000;
 	
 	static CommonsHttpSolrServer server; // Solr server connection
-	private int D = 50; // number of top ranking documents to retrieve
+	private int D = 30; // number of top ranking documents to retrieve
 	private int W = 10; // number of top ranking words to retrieve
-	private int NOR = 20; // Number of results to return to GUI 
-									
-	private int minDocsize = 600; // Minimum document size to consider
+	private int minDocsize = 1000; // Minimum document size to consider
 	private DWMatrix dwMatrix; // Document|Word Matrix
 
 	private ArrayList<String> queryWords = new ArrayList<String>();
-	private int queryType = SUMMATION_RANK;
+	private int queryType = MERGED_RANK;
 	private String strQuery;
 
 	/**
@@ -211,7 +209,7 @@ public class ContextExpander {
 			for(Word w : lw)
 			{
 				double oldScore = w.getScore();
-				w.setScore((w.getScore()/scoreSum)*MAX_SCORE);
+				w.setScore((oldScore/scoreSum)*MAX_SCORE);
 			}
 		}
 		
@@ -261,7 +259,7 @@ public class ContextExpander {
 	 * @param minDocSize
 	 *            - number of chars in document.
 	 */
-	private void setMinDocSize(int minDocSize) {
+	public void setMinDocSize(int minDocSize) {
 		this.minDocsize = minDocSize;
 	}
 
